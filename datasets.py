@@ -5,35 +5,48 @@ Created on Mon Jan 09 14:01:35 2017
 @author: sakurai
 """
 
-
-from fuel.schemes import SequentialScheme
+import numpy as np
 from fuel.streams import DataStream
-from random_fixed_size_crop_mod import RandomFixedSizeCrop
+from fuel.transformers.image import RandomFixedSizeCrop
 
 from cars196_dataset import Cars196Dataset
+from iteration_schemes import NPairLossScheme
 
 
-def make_random_cropped_stream(dataset, crop_size):
-    # This scheme is dummy, since DataStream requires an iteration_scheme for
-    # DataStream.produces_examples to be False in the constructor.
-    dummy_scheme = SequentialScheme(1, 1)
+def make_random_cropped_stream(dataset, batch_size, crop_size):
+    tmp_stream = DataStream(dataset)
+    labels = [tmp_stream.get_data([i])[1] for i in range(dataset.num_examples)]
+    labels = np.ravel(labels)
+    iteration_scheme = NPairLossScheme(labels, batch_size)
 
     stream = RandomFixedSizeCrop(
-        DataStream(dataset, iteration_scheme=dummy_scheme),
+        DataStream(dataset, iteration_scheme=iteration_scheme),
         (crop_size, crop_size), which_sources=("images"))
+
+    # This line is necessary to work with multiprocessing.
+    # The hdf5 file is opened when the first data is fetched and it seem that
+    # the file-open must be done in the main process otherwise an error occurs.
+    stream.get_epoch_iterator().next()
     return stream
 
 
-def get_cars196_streams(crop_size=227, load_in_memory=False):
+def get_cars196_streams(batch_size, crop_size=227, load_in_memory=False):
     train_dataset = Cars196Dataset(['train'], load_in_memory=load_in_memory)
-    train_stream = make_random_cropped_stream(train_dataset, crop_size)
+    train_stream = make_random_cropped_stream(
+        train_dataset, batch_size, crop_size)
 
     test_dataset = Cars196Dataset(['test'], load_in_memory=load_in_memory)
-    test_stream = make_random_cropped_stream(test_dataset, crop_size)
+    test_stream = make_random_cropped_stream(
+        test_dataset, batch_size, crop_size)
 
     return train_stream, test_stream
 
 
 if __name__ == '__main__':
-    train, test = get_cars196_streams(load_in_memory=True)
-    train.get_data([0, 1, 2])
+    batch_size = 50
+    train, test = get_cars196_streams(batch_size, load_in_memory=False)
+#    train.get_data([0, 1, 2])
+    it = train.get_epoch_iterator()
+    x, c = next(it)
+    print c.ravel()[:batch_size / 2].tolist()
+    print c.ravel()[batch_size / 2:].tolist()
