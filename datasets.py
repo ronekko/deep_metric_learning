@@ -22,6 +22,11 @@ def make_random_cropped_stream(dataset, batch_size, crop_size):
     stream = RandomFixedSizeCrop(
         DataStream(dataset, iteration_scheme=iteration_scheme),
         (crop_size, crop_size), which_sources=("images"))
+
+    # This line is necessary to work with multiprocessing.
+    # The hdf5 file is opened when the first data is fetched and it seem that
+    # the file-open must be done in the main process otherwise an error occurs.
+    stream.get_epoch_iterator().next()
     return stream
 
 
