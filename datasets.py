@@ -5,11 +5,9 @@ Created on Mon Jan 09 14:01:35 2017
 @author: sakurai
 """
 
-
-from fuel.schemes import SequentialScheme
 import numpy as np
 from fuel.streams import DataStream
-from random_fixed_size_crop_mod import RandomFixedSizeCrop
+from fuel.transformers.image import RandomFixedSizeCrop
 
 from cars196_dataset import Cars196Dataset
 from iteration_schemes import NPairLossScheme
@@ -47,4 +45,3 @@ if __name__ == '__main__':
     x, c = next(it)
     print c.ravel()[:batch_size / 2].tolist()
     print c.ravel()[batch_size / 2:].tolist()
-
