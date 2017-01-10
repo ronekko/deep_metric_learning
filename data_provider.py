@@ -29,7 +29,7 @@ class DataProvider(object):
         self.num_classes = len(self._classes)
         assert batch_size <= self.num_classes, (
                "batch_size must not be greather than the number of classes"
-               " (i.e. batch_size <= {})".format(self.num_classes))
+               " (i.e. set batch_size <= {})".format(self.num_classes))
         self.batch_size = batch_size
 
         self._class_to_indexes = []
