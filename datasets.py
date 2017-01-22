@@ -7,6 +7,7 @@ Created on Mon Jan 09 14:01:35 2017
 
 import numpy as np
 from fuel.streams import DataStream
+from fuel.schemes import SequentialScheme
 from fuel.transformers.image import RandomFixedSizeCrop
 
 from cars196_dataset import Cars196Dataset
@@ -36,8 +37,10 @@ def get_cars196_streams(batch_size, crop_size=227, load_in_memory=False):
         train_dataset, batch_size, crop_size)
 
     test_dataset = Cars196Dataset(['test'], load_in_memory=load_in_memory)
-    test_stream = make_random_cropped_stream(
-        test_dataset, batch_size, crop_size)
+    sequential_scheme = SequentialScheme(test_dataset.num_examples, batch_size)
+    test_stream = RandomFixedSizeCrop(DataStream(
+        test_dataset, iteration_scheme=sequential_scheme),
+        (crop_size, crop_size), which_sources=("images"))
 
     return train_stream, test_stream
 
@@ -47,6 +50,11 @@ if __name__ == '__main__':
     train, test = get_cars196_streams(batch_size, load_in_memory=False)
 #    train.get_data([0, 1, 2])
     it = train.get_epoch_iterator()
+    x, c = next(it)
+    print c.ravel()[:batch_size / 2].tolist()
+    print c.ravel()[batch_size / 2:].tolist()
+
+    it = test.get_epoch_iterator()
     x, c = next(it)
     print c.ravel()[:batch_size / 2].tolist()
     print c.ravel()[batch_size / 2:].tolist()
