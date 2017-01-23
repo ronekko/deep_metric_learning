@@ -9,7 +9,7 @@ import numpy as np
 
 from chainer.datasets import TupleDataset
 from sklearn.preprocessing import LabelEncoder
-from my_iterators import SerialIterator
+from my_iterators import SerialIterator, MultiprocessIterator
 
 
 class NPairMCIndexesSampler(object):
@@ -52,6 +52,7 @@ if __name__ == '__main__':
     batch_size = 10
     num_batches = 5
     repeat = True
+    multiprocess = True
 
     labels = np.array(sum([[i]*10 for i in range(10)], []))
     num_examples = len(labels)
@@ -59,8 +60,14 @@ if __name__ == '__main__':
     dataset = TupleDataset(x, labels)
 
     indexes_sampler = NPairMCIndexesSampler(labels, batch_size, num_batches)
-    it = SerialIterator(dataset, batch_size, repeat=repeat,
-                        order_sampler=indexes_sampler)
+    if multiprocess:
+        it = MultiprocessIterator(dataset, batch_size, repeat=repeat,
+                                  shuffle=True)
+#                                  order_sampler=indexes_sampler)
+    else:
+        it = SerialIterator(dataset, batch_size, repeat=repeat,
+                            shuffle=True)
+#                            order_sampler=indexes_sampler)
 
     for i in range(num_batches*2):
         batch = next(it)
@@ -68,3 +75,6 @@ if __name__ == '__main__':
         print batch[:batch_size/2]
         print batch[batch_size/2:]
         print
+
+    if multiprocess:
+        it.finalize()
