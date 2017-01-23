@@ -20,6 +20,15 @@ class Cars196Dataset(H5PYDataset):
             file_or_path=find_in_data_path(self._filename),
             which_sets=which_sets, **kwargs)
 
+
+def load_as_ndarray(which_sets=['train', 'test']):
+    datasets = []
+    for split in which_sets:
+        data = Cars196Dataset([split], load_in_memory=True).data_sources
+        datasets.append(data)
+    return datasets
+
+
 if __name__ == '__main__':
     dataset = Cars196Dataset(['train'])
 
