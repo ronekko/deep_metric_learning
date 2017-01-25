@@ -21,12 +21,14 @@ from chainer import Variable
 from chainer.dataset.convert import concat_examples
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
+import colorama
 
 from n_pair_mc_loss import n_pair_mc_loss
 import common
 from datasets import get_cars196_streams
 import chainer_datasets
 
+colorama.init()
 
 class Model(chainer.Chain):  # same as classifier
     def __init__(self, out_dim):
@@ -118,14 +120,14 @@ if __name__ == '__main__':
     loss_l2_reg = 0.001
     crop_size = 227
     num_epochs = 5000
-    num_batches_per_epoch = 3
+    num_batches_per_epoch = 500
 
     ##########################################################
     # load database
     ##########################################################
     iters = chainer_datasets.get_iterators(batch_size)
     iter_train, iter_train_eval, iter_test = iters
-    num_batches_per_epoch = iter_train._order_sampler.num_batches
+#    num_batches_per_epoch = iter_train._order_sampler.num_batches
 
     ##########################################################
     # construct the model
@@ -206,37 +208,37 @@ if __name__ == '__main__':
                 retrieval_best = retrieval
                 retrieval_test_best = retrieval_test
 
-            if epoch % 3 == 0:
-                plt.figure(figsize=(8, 4))
-                plt.subplot(1, 2, 1)
-                mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
-                plt.colorbar(mat, fraction=0.045)
-                plt.subplot(1, 2, 2)
-                mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
-                plt.colorbar(mat, fraction=0.045)
-                plt.tight_layout()
+            # Draw plots
+            plt.figure(figsize=(8, 4))
+            plt.subplot(1, 2, 1)
+            mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
+            plt.colorbar(mat, fraction=0.045)
+            plt.subplot(1, 2, 2)
+            mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
+            plt.colorbar(mat, fraction=0.045)
+            plt.tight_layout()
 
-                plt.figure(figsize=(8, 4))
-                plt.subplot(1, 2, 1)
-                plt.plot(loss_log, label="tr-loss")
-                plt.grid()
-                plt.legend(loc='best')
-                plt.subplot(1, 2, 2)
-                plt.plot(train_log)
-                plt.plot(test_log)
-                plt.grid()
-                plt.legend(["tr-soft", "tr-hard", "tr-retr",
-                            "te-soft", "te-hard", "te-retr"],
-                           bbox_to_anchor=(1.4, 1))
-                plt.tight_layout()
-                plt.show()
-                plt.draw()
+            plt.figure(figsize=(8, 4))
+            plt.subplot(1, 2, 1)
+            plt.plot(loss_log, label="tr-loss")
+            plt.grid()
+            plt.legend(loc='best')
+            plt.subplot(1, 2, 2)
+            plt.plot(train_log)
+            plt.plot(test_log)
+            plt.grid()
+            plt.legend(["tr-soft", "tr-hard", "tr-retr",
+                        "te-soft", "te-hard", "te-retr"],
+                       bbox_to_anchor=(1.4, 1))
+            plt.tight_layout()
+            plt.show()
+            plt.draw()
 
-                loss = None
-                accuracy = None
-                accuracy_test = None
-                D = None
-                D_test = None
+            loss = None
+            accuracy = None
+            accuracy_test = None
+            D = None
+            D_test = None
 
     except KeyboardInterrupt:
         pass
