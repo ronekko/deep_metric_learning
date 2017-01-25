@@ -18,13 +18,17 @@ import chainer.links as L
 from chainer import optimizers
 from chainer import serializers
 from chainer import Variable
+from chainer.dataset.convert import concat_examples
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
+import colorama
 
 from n_pair_mc_loss import n_pair_mc_loss
 import common
 from datasets import get_cars196_streams
+import chainer_datasets
 
+colorama.init()
 
 class Model(chainer.Chain):  # same as classifier
     def __init__(self, out_dim):
@@ -108,6 +112,7 @@ def worker_load_data(queue, stream):
 
 if __name__ == '__main__':
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
+    device = 0
     xp = chainer.cuda.cupy
     learning_rate = 0.00001  # 0.00001 is good
     batch_size = 50
@@ -115,23 +120,14 @@ if __name__ == '__main__':
     loss_l2_reg = 0.001
     crop_size = 227
     num_epochs = 5000
-    num_batches_per_epoch = 3
+    num_batches_per_epoch = 500
 
     ##########################################################
-    # load CVL-database
+    # load database
     ##########################################################
-    train_stream, test_stream = get_cars196_streams(
-        batch_size, crop_size, load_in_memory=False)
-
-    # load data on a parallel process
-    queue_train = Queue(maxsize=4)
-    process_train = Process(target=worker_load_data,
-                            args=(queue_train, train_stream))
-    process_train.start()
-
-    # load test data
-    x_test_data, c_test_data = test_stream.data_stream.dataset.get_data(
-        request=range(test_stream.data_stream.dataset.num_examples))
+    iters = chainer_datasets.get_iterators(batch_size)
+    iter_train, iter_train_eval, iter_test = iters
+#    num_batches_per_epoch = iter_train._order_sampler.num_batches
 
     ##########################################################
     # construct the model
@@ -151,11 +147,11 @@ if __name__ == '__main__':
             time_begin = time.time()
             epoch_losses = []
 
-            for r in tqdm(range(num_batches_per_epoch)):
+            for i in tqdm(range(num_batches_per_epoch)):
                 # the first half　of a batch are the anchors and the latters
                 # are the positive examples corresponding to each anchor
-                x_data, c_data = queue_train.get()
-                x_data = xp.asarray(x_data.astype(np.float32) / 255.0)
+                batch = next(iter_train)
+                x_data, c_data = concat_examples(batch, device)
                 y = model(x_data, test=False)
                 y_a, y_p = F.split_axis(y, 2, axis=0)
 
@@ -171,15 +167,10 @@ if __name__ == '__main__':
             loss_average = np.mean(epoch_losses)
 
             # average accuracy and distance matrix for training data
-            x_data, c_data = queue_train.get()
-            x_data = x_data.astype(np.float32) / 255.0
-            D, soft, hard, retrieval = common.evaluate(
-                model, x_data, c_data, batch_size)
+            D, soft, hard, retrieval = common.evaluate(model, iter_train_eval)
 
             # average accuracy and distance matrix for testing data
-            x_test_data = x_test_data.astype(np.float32) / 255.0
-            result_test = common.evaluate(
-                model, x_test_data, c_test_data, batch_size)
+            result_test = common.evaluate(model, iter_test)
             D_test, soft_test, hard_test, retrieval_test = result_test
 
             time_end = time.time()
@@ -217,42 +208,40 @@ if __name__ == '__main__':
                 retrieval_best = retrieval
                 retrieval_test_best = retrieval_test
 
-            if epoch % 3 == 0:
-                plt.figure(figsize=(8, 4))
-                plt.subplot(1, 2, 1)
-                mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
-                plt.colorbar(mat, fraction=0.045)
-                plt.subplot(1, 2, 2)
-                mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
-                plt.colorbar(mat, fraction=0.045)
-                plt.tight_layout()
+            # Draw plots
+            plt.figure(figsize=(8, 4))
+            plt.subplot(1, 2, 1)
+            mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
+            plt.colorbar(mat, fraction=0.045)
+            plt.subplot(1, 2, 2)
+            mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
+            plt.colorbar(mat, fraction=0.045)
+            plt.tight_layout()
 
-                plt.figure(figsize=(8, 4))
-                plt.subplot(1, 2, 1)
-                plt.plot(loss_log, label="tr-loss")
-                plt.grid()
-                plt.legend(loc='best')
-                plt.subplot(1, 2, 2)
-                plt.plot(train_log)
-                plt.plot(test_log)
-                plt.grid()
-                plt.legend(["tr-soft", "tr-hard", "tr-retr",
-                            "te-soft", "te-hard", "te-retr"],
-                           bbox_to_anchor=(1.4, 1))
-                plt.tight_layout()
-                plt.show()
-                plt.draw()
+            plt.figure(figsize=(8, 4))
+            plt.subplot(1, 2, 1)
+            plt.plot(loss_log, label="tr-loss")
+            plt.grid()
+            plt.legend(loc='best')
+            plt.subplot(1, 2, 2)
+            plt.plot(train_log)
+            plt.plot(test_log)
+            plt.grid()
+            plt.legend(["tr-soft", "tr-hard", "tr-retr",
+                        "te-soft", "te-hard", "te-retr"],
+                       bbox_to_anchor=(1.4, 1))
+            plt.tight_layout()
+            plt.show()
+            plt.draw()
 
-                loss = None
-                accuracy = None
-                accuracy_test = None
-                D = None
-                D_test = None
+            loss = None
+            accuracy = None
+            accuracy_test = None
+            D = None
+            D_test = None
 
     except KeyboardInterrupt:
         pass
-
-    process_train.terminate()
 
     dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%H%S"),
                          str(soft_test_best[0])])

@@ -42,12 +42,12 @@ class SerialIterator(iterator.Iterator):
         self.batch_size = batch_size
         self._repeat = repeat
         if order_sampler:
-            self._sample_order = order_sampler
+            self._order_sampler = order_sampler
         elif shuffle:
-            self._sample_order = lambda: numpy.random.permutation(
+            self._order_sampler = lambda: numpy.random.permutation(
                 len(self.dataset))
-        if self._sample_order:
-            self._order = self._sample_order()
+        if hasattr(self, '_order_sampler'):
+            self._order = self._order_sampler()
         else:
             self._order = None
 
@@ -73,7 +73,7 @@ class SerialIterator(iterator.Iterator):
             if self._repeat:
                 rest = i_end - N
                 if self._order is not None:
-                    self._order = self._sample_order()
+                    self._order = self._order_sampler()
                 if rest > 0:
                     if self._order is None:
                         batch += list(self.dataset[:rest])
@@ -144,12 +144,12 @@ class MultiprocessIterator(iterator.Iterator):
         self.batch_size = batch_size
         self._repeat = repeat
         if order_sampler:
-            self._sample_order = order_sampler
+            self._order_sampler = order_sampler
         elif shuffle:
-            self._sample_order = lambda: numpy.random.permutation(
+            self._order_sampler = lambda: numpy.random.permutation(
                 len(self.dataset))
-        if self._sample_order:
-            self._order = self._sample_order()
+        if hasattr(self, '_order_sampler'):
+            self._order = self._order_sampler()
         else:
             self._order = None
         self._prefetch_order = None  # used at the end of each epoch
@@ -273,7 +273,7 @@ class MultiprocessIterator(iterator.Iterator):
                     # iterator may be serialized before the prefetched data are
                     # consumed by the user, in which case an inconsistency
                     # appears.
-                    order = self._sample_order()
+                    order = self._order_sampler()
             index = i if order is None else order[i]
             if measure_mode:
                 data = self.dataset[index]

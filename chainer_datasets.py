@@ -52,9 +52,41 @@ class RandomCropFlipDataset(DatasetMixin):
         right = left + crop_size_w
 
         image = image[:, top:bottom, left:right]
-        image = image / 255.0  # Scale to [0, 1]
+        image = image.astype(np.float32) / 255.0  # Scale to [0, 1]
 
         return image, label
+
+
+def make_n_pairs_mc_iterator(x, labels, batch_size, multiprocess=False,
+                             repeat=True):
+    dataset = RandomCropFlipDataset(x, labels)
+    num_batches = len(dataset) / batch_size
+    order_sampler = NPairMCIndexesSampler(labels, batch_size, num_batches)
+    if multiprocess:
+        it = MultiprocessIterator(dataset, batch_size, repeat=repeat,
+                                  n_processes=3, order_sampler=order_sampler)
+    else:
+        it = SerialIterator(dataset, batch_size, repeat=repeat,
+                            order_sampler=order_sampler)
+    return it
+
+
+def make_epoch_iterator(x, labels, batch_size, multiprocess=False):
+    dataset = RandomCropFlipDataset(x, labels)
+    if multiprocess:
+        it = MultiprocessIterator(dataset, batch_size, repeat=False,
+                                  shuffle=False, n_processes=3)
+    else:
+        it = SerialIterator(dataset, batch_size, repeat=False, shuffle=False)
+    return it
+
+
+def get_iterators(batch_size=50):
+    train, test = cars196_dataset.load_as_ndarray(['train', 'test'])
+    iter_train = make_n_pairs_mc_iterator(train[0], train[1], batch_size)
+    iter_train_eval = make_epoch_iterator(train[0], train[1], batch_size)
+    iter_test = make_epoch_iterator(test[0], test[1], batch_size)
+    return iter_train, iter_train_eval, iter_test
 
 
 if __name__ == '__main__':
