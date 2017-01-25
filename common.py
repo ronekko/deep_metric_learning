@@ -5,6 +5,7 @@ Created on Thu Nov 03 01:55:58 2016
 @author: sakurai
 """
 
+import copy
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +17,7 @@ import cupy
 
 # average accuracy and distance matrix for test data
 def evaluate(model, epoch_iterator, train=False):
-    it = epoch_iterator
+    it = copy.copy(epoch_iterator)
     num_examples = len(it.dataset)
     # fprop to calculate distance matrix (not for backprop)
     y_batches = []
