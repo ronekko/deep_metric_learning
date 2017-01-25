@@ -47,7 +47,7 @@ def evaluate(model, epoch_iterator, train=False):
     hards = []
     retrievals = []
     for sqd, id_i in zip(D, c_data):
-        _, ranked_ids = zip(*sorted(zip(sqd, c_data)))
+        ranked_ids = c_data[np.argsort(sqd)]
         # 0th entry is excluded since it is always 0
         result = ranked_ids[1:] == id_i
 
