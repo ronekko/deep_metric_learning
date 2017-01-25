@@ -33,7 +33,7 @@ def evaluate(model, epoch_iterator, train=False):
     c_data = np.concatenate(c_batches)
 
     # compute the distance matrix of the list of ys
-    D = cupy.empty((num_examples, num_examples))
+    D = cupy.empty((num_examples, num_examples), dtype=np.float32)
     stop = 0
     for y_batch in y_batches:
         start = stop
