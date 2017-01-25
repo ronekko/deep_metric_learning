@@ -52,7 +52,7 @@ class RandomCropFlipDataset(DatasetMixin):
         right = left + crop_size_w
 
         image = image[:, top:bottom, left:right]
-        image = image / 255.0  # Scale to [0, 1]
+        image = image.astype(np.float32) / 255.0  # Scale to [0, 1]
 
         return image, label
 
