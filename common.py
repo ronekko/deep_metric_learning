@@ -5,12 +5,17 @@ Created on Thu Nov 03 01:55:58 2016
 @author: sakurai
 """
 
+from collections import defaultdict
 import copy
 import itertools
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
 from chainer import Variable
+from chainer import Optimizer
+from chainer import Chain, ChainList
+from chainer.serializers import save_npz
 from chainer.dataset.convert import concat_examples
 import cupy
 
@@ -131,3 +136,34 @@ class NPairMCIndexMaker(object):
                 epoch_indexes.append((indexes_anchor, indexes_positive))
 
         return epoch_indexes
+
+
+class Logger(object):
+    def __init__(self, dir_path):
+        self.dir_path = dir_path
+        os.makedirs(dir_path)
+        self._dict = defaultdict(list)
+
+    def append(self, key, value):
+        self._dict[key].append(value)
+
+    def overwrite(self, key, value):
+        self._dict[key] = value
+
+    def save(self):
+        others = []
+        for key, value in self._dict:
+            if isinstance(value, np.ndarray):
+                np.save(os.path.join(self.dir_path, key + ".npy"), value)
+            elif isinstance(value, (Chain, ChainList)):
+                model_path = os.path.join(self.dir_path, "model.npz")
+                save_npz(model_path, value)
+            elif isinstance(value, (Optimizer)):
+                optimizer_path = os.path.join(self.dir_path, "optimizer.npz")
+                save_npz(optimizer_path, value)
+            else:
+                others.append("{}: {}".format(key, value))
+
+        with open(os.path.join(self.dir_path, "log.txt"), "w") as f:
+            text = "\n".join(others)
+            f.write(text)
