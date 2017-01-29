@@ -115,43 +115,44 @@ if __name__ == '__main__':
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
     xp = chainer.cuda.cupy
-    learning_rate = 0.00001  # 0.00001 is good
-    batch_size = 50
-    out_dim = 50
-    loss_l2_reg = 0.001
-    crop_size = 227
-    num_epochs = 5000
-    num_batches_per_epoch = 500
     config_parser = ConfigParser.SafeConfigParser()
     config_parser.read('config')
     log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
 
+    p = common.Logger(log_dir_path)  # hyperparameters
+    p.learning_rate = 0.0001  # 0.0001 is good
+    p.batch_size = 60
+    p.out_dim = 50
+    p.loss_l2_reg = 0.001
+    p.crop_size = 227
+    p.num_epochs = 5000
+    p.num_batches_per_epoch = 20
+
+
     ##########################################################
     # load database
     ##########################################################
-    iters = chainer_datasets.get_iterators(batch_size)
+    iters = chainer_datasets.get_iterators(p.batch_size)
     iter_train, iter_train_eval, iter_test = iters
 #    num_batches_per_epoch = iter_train._order_sampler.num_batches
 
     ##########################################################
     # construct the model
     ##########################################################
-    model = Model(out_dim).to_gpu()
+    model = Model(p.out_dim).to_gpu()
     model = model.to_gpu()
-    optimizer = optimizers.Adam(learning_rate)
+    optimizer = optimizers.Adam(p.learning_rate)
     optimizer.setup(model)
 
-    loss_log = []
-    train_log = []
-    test_log = []
-    soft_test_best = [0]
+    logger = common.Logger(log_dir_path)
+    logger['soft_test_best'] = [0]
     time_origin = time.time()
     try:
-        for epoch in range(num_epochs):
+        for epoch in range(p.num_epochs):
             time_begin = time.time()
             epoch_losses = []
 
-            for i in tqdm(range(num_batches_per_epoch)):
+            for i in tqdm(range(p.num_batches_per_epoch)):
                 # the first half　of a batch are the anchors and the latters
                 # are the positive examples corresponding to each anchor
                 batch = next(iter_train)
@@ -159,7 +160,7 @@ if __name__ == '__main__':
                 y = model(x_data, test=False)
                 y_a, y_p = F.split_axis(y, 2, axis=0)
 
-                loss = n_pair_mc_loss(y_a, y_p, loss_l2_reg)
+                loss = n_pair_mc_loss(y_a, y_p, p.loss_l2_reg)
                 optimizer.zero_grads()
                 loss.backward()
                 optimizer.update()
@@ -190,27 +191,51 @@ if __name__ == '__main__':
             print "[test]  soft:", soft_test
             print "[test]  hard:", hard_test
             print "[test]  retr:", retrieval_test
+            print "lr:{}, l2_loss_reg:{}, bs:{}".format(
+                p.learning_rate, p.loss_l2_reg, p.batch_size)
             # print norms of the weights
-            print "|W|", [np.linalg.norm(p.data.get()) for p in model.params()]
-            print "lr:{}, margin:{}".format(learning_rate, loss_l2_reg)
+            print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
             print
-            loss_log.append(loss_average)
-            train_log.append([soft[0], hard[0], retrieval[0]])
-            test_log.append([soft_test[0], hard_test[0], retrieval_test[0]])
+            # >>>>>>>>
+#            loss_log.append(loss_average)
+#            train_log.append([soft[0], hard[0], retrieval[0]])
+#            test_log.append([soft_test[0], hard_test[0], retrieval_test[0]])
+            # --------
+            logger.epoch = epoch
+            logger.total_time = total_time
+            logger['loss_log'].append(loss_average)
+            logger['train_log'].append([soft[0], hard[0], retrieval[0]])
+            logger['test_log'].append(
+                [soft_test[0], hard_test[0], retrieval_test[0]])
+            # <<<<<<<<
 
             # retain the model if it scored the best test acc. ever
-            if soft_test[0] > soft_test_best[0]:
-                model_best = copy.deepcopy(model)
-                optimizer_best = copy.deepcopy(optimizer)
-                epoch_best = epoch
-                D_best = D
-                D_test_best = D_test
-                soft_best = soft
-                soft_test_best = soft_test
-                hard_best = hard
-                hard_test_best = hard_test
-                retrieval_best = retrieval
-                retrieval_test_best = retrieval_test
+            if soft_test[0] > logger['soft_test_best'][0]:
+#                model_best = copy.deepcopy(model)
+#                optimizer_best = copy.deepcopy(optimizer)
+#                epoch_best = epoch
+#                D_best = D
+#                D_test_best = D_test
+#                soft_best = soft
+#                soft_test_best = soft_test
+#                hard_best = hard
+#                hard_test_best = hard_test
+#                retrieval_best = retrieval
+#                retrieval_test_best = retrieval_test
+                # --------
+                logger['model_best'] = copy.deepcopy(model)
+                logger['optimizer_best'] = copy.deepcopy(optimizer)
+                logger['epoch_best'] = epoch
+                logger['D_best'] = D
+                logger['D_test_best'] = D_test
+                logger['soft_best'] = soft
+                logger['soft_test_best'] = soft_test
+                logger['hard_best'] = hard
+                logger['hard_test_best'] = hard_test
+                logger['retrieval_best'] = retrieval
+                logger['retrieval_test_best'] = retrieval_test
+
+
 
             # Draw plots
             plt.figure(figsize=(8, 4))
@@ -224,12 +249,12 @@ if __name__ == '__main__':
 
             plt.figure(figsize=(8, 4))
             plt.subplot(1, 2, 1)
-            plt.plot(loss_log, label="tr-loss")
+            plt.plot(logger['loss_log'], label="tr-loss")
             plt.grid()
             plt.legend(loc='best')
             plt.subplot(1, 2, 2)
-            plt.plot(train_log)
-            plt.plot(test_log)
+            plt.plot(logger['train_log'])
+            plt.plot(logger['test_log'])
             plt.grid()
             plt.legend(["tr-soft", "tr-hard", "tr-retr",
                         "te-soft", "te-hard", "te-retr"],
@@ -247,31 +272,35 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
-    dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%H%S"),
-                         str(soft_test_best[0])])
-    os.mkdir(dir_name)
-    model_path = os.path.join(dir_name, "model.npz")
-    serializers.save_npz(model_path, model_best)
-    optimizer_path = os.path.join(dir_name, "optimizer.npz")
-    serializers.save_npz(optimizer_path, optimizer_best)
-    np.save(os.path.join(dir_name, "loss_log.npy"), loss_log)
-    np.save(os.path.join(dir_name, "train_log.npy"), train_log)
-    np.save(os.path.join(dir_name, "test_log.npy"), test_log)
-    np.save(os.path.join(dir_name, "D.npy"), D_best)
-    np.save(os.path.join(dir_name, "D_test.npy"), D_test_best)
-    np.save(os.path.join(dir_name, "soft.npy"), soft_best)
-    np.save(os.path.join(dir_name, "soft_test.npy"), soft_test_best)
-    np.save(os.path.join(dir_name, "hard.npy"), hard_best)
-    np.save(os.path.join(dir_name, "hard_test.npy"), hard_test_best)
-    np.save(os.path.join(dir_name, "retrieval.npy"), retrieval_best)
-    np.save(os.path.join(dir_name, "retrieval_test.npy"), retrieval_test_best)
-    with open(os.path.join(dir_name, "log.txt"), "w") as f:
-        text = "\n".join(["total epochs: {}".format(epoch),
-                          "best epoch: {}".format(epoch_best),
-                          "total time: {} [s]".format(total_time),
-                          "lr: {}".format(learning_rate),
-                          "batch_size: {}".format(batch_size),
-                          "loss_l2_reg: {}".format(loss_l2_reg),
-                          "out_dim: {}".format(out_dim),
-                          "crop_size: {}".format(crop_size)])
-        f.write(text)
+    dir_name = "-".join([script_filename,time.strftime("%Y%m%d%H%H%S"),
+                         str(logger['retrieval_test_best'][0])])
+#    dir_name = os.path.join(log_dir_path, dir_name)
+#    os.mkdir(dir_name)
+#    model_path = os.path.join(dir_name, "model.npz")
+#    serializers.save_npz(model_path, model_best)
+#    optimizer_path = os.path.join(dir_name, "optimizer.npz")
+#    serializers.save_npz(optimizer_path, optimizer_best)
+#    np.save(os.path.join(dir_name, "loss_log.npy"), loss_log)
+#    np.save(os.path.join(dir_name, "train_log.npy"), train_log)
+#    np.save(os.path.join(dir_name, "test_log.npy"), test_log)
+#
+#    np.save(os.path.join(dir_name, "D.npy"), D_best)
+#    np.save(os.path.join(dir_name, "D_test.npy"), D_test_best)
+#    np.save(os.path.join(dir_name, "soft.npy"), soft_best)
+#    np.save(os.path.join(dir_name, "soft_test.npy"), soft_test_best)
+#    np.save(os.path.join(dir_name, "hard.npy"), hard_best)
+#    np.save(os.path.join(dir_name, "hard_test.npy"), hard_test_best)
+#    np.save(os.path.join(dir_name, "retrieval.npy"), retrieval_best)
+#    np.save(os.path.join(dir_name, "retrieval_test.npy"), retrieval_test_best)
+#    with open(os.path.join(dir_name, "log.txt"), "w") as f:
+#        text = "\n".join(["total epochs: {}".format(epoch),
+#                          "best epoch: {}".format(epoch_best),
+#                          "total time: {} [s]".format(total_time),
+#                          "lr: {}".format(learning_rate),
+#                          "batch_size: {}".format(batch_size),
+#                          "loss_l2_reg: {}".format(loss_l2_reg),
+#                          "out_dim: {}".format(out_dim),
+#                          "crop_size: {}".format(crop_size)])
+#        f.write(text)
+    logger.save(dir_name)
+    p.save(dir_name)
