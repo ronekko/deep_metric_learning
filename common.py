@@ -141,7 +141,8 @@ class NPairMCIndexMaker(object):
 class Logger(object):
     def __init__(self, dir_path):
         self.dir_path = dir_path
-        os.makedirs(dir_path)
+        if not  os.path.exists(dir_path):
+            os.makedirs(dir_path)
         self._dict = defaultdict(list)
 
     def append(self, key, value):
