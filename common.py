@@ -11,6 +11,7 @@ import itertools
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import euclidean_distances
 
 from chainer import Variable
 from chainer import Optimizer
@@ -38,15 +39,7 @@ def evaluate(model, epoch_iterator, train=False):
     c_data = np.concatenate(c_batches)
 
     # compute the distance matrix of the list of ys
-    D = cupy.empty((num_examples, num_examples), dtype=np.float32)
-    stop = 0
-    for y_batch in y_batches:
-        start = stop
-        stop += len(y_batch)
-        D[start:stop] = cupy.sum(
-            (cupy.expand_dims(y_batch, 1) - cupy.expand_dims(y_data, 0)) ** 2,
-            axis=2)
-    D = cupy.sqrt(D).get()
+    D = euclidean_distances(y_data, squared=False)
 
     softs = []
     hards = []
