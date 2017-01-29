@@ -8,6 +8,7 @@ Created on Mon Jan 09 20:49:04 2017
 import os
 import time
 import copy
+import ConfigParser
 from multiprocessing import Process, Queue
 import numpy as np
 import matplotlib.pyplot as plt
@@ -121,6 +122,9 @@ if __name__ == '__main__':
     crop_size = 227
     num_epochs = 5000
     num_batches_per_epoch = 500
+    config_parser = ConfigParser.SafeConfigParser()
+    config_parser.read('config')
+    log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
 
     ##########################################################
     # load database
