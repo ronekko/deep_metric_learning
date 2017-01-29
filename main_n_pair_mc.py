@@ -128,7 +128,6 @@ if __name__ == '__main__':
     p.num_epochs = 5000
     p.num_batches_per_epoch = 20
 
-
     ##########################################################
     # load database
     ##########################################################
@@ -196,33 +195,15 @@ if __name__ == '__main__':
             # print norms of the weights
             print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
             print
-            # >>>>>>>>
-#            loss_log.append(loss_average)
-#            train_log.append([soft[0], hard[0], retrieval[0]])
-#            test_log.append([soft_test[0], hard_test[0], retrieval_test[0]])
-            # --------
             logger.epoch = epoch
             logger.total_time = total_time
             logger['loss_log'].append(loss_average)
             logger['train_log'].append([soft[0], hard[0], retrieval[0]])
             logger['test_log'].append(
                 [soft_test[0], hard_test[0], retrieval_test[0]])
-            # <<<<<<<<
 
             # retain the model if it scored the best test acc. ever
             if soft_test[0] > logger['soft_test_best'][0]:
-#                model_best = copy.deepcopy(model)
-#                optimizer_best = copy.deepcopy(optimizer)
-#                epoch_best = epoch
-#                D_best = D
-#                D_test_best = D_test
-#                soft_best = soft
-#                soft_test_best = soft_test
-#                hard_best = hard
-#                hard_test_best = hard_test
-#                retrieval_best = retrieval
-#                retrieval_test_best = retrieval_test
-                # --------
                 logger['model_best'] = copy.deepcopy(model)
                 logger['optimizer_best'] = copy.deepcopy(optimizer)
                 logger['epoch_best'] = epoch
@@ -272,35 +253,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
-    dir_name = "-".join([script_filename,time.strftime("%Y%m%d%H%H%S"),
+    dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%H%S"),
                          str(logger['retrieval_test_best'][0])])
-#    dir_name = os.path.join(log_dir_path, dir_name)
-#    os.mkdir(dir_name)
-#    model_path = os.path.join(dir_name, "model.npz")
-#    serializers.save_npz(model_path, model_best)
-#    optimizer_path = os.path.join(dir_name, "optimizer.npz")
-#    serializers.save_npz(optimizer_path, optimizer_best)
-#    np.save(os.path.join(dir_name, "loss_log.npy"), loss_log)
-#    np.save(os.path.join(dir_name, "train_log.npy"), train_log)
-#    np.save(os.path.join(dir_name, "test_log.npy"), test_log)
-#
-#    np.save(os.path.join(dir_name, "D.npy"), D_best)
-#    np.save(os.path.join(dir_name, "D_test.npy"), D_test_best)
-#    np.save(os.path.join(dir_name, "soft.npy"), soft_best)
-#    np.save(os.path.join(dir_name, "soft_test.npy"), soft_test_best)
-#    np.save(os.path.join(dir_name, "hard.npy"), hard_best)
-#    np.save(os.path.join(dir_name, "hard_test.npy"), hard_test_best)
-#    np.save(os.path.join(dir_name, "retrieval.npy"), retrieval_best)
-#    np.save(os.path.join(dir_name, "retrieval_test.npy"), retrieval_test_best)
-#    with open(os.path.join(dir_name, "log.txt"), "w") as f:
-#        text = "\n".join(["total epochs: {}".format(epoch),
-#                          "best epoch: {}".format(epoch_best),
-#                          "total time: {} [s]".format(total_time),
-#                          "lr: {}".format(learning_rate),
-#                          "batch_size: {}".format(batch_size),
-#                          "loss_l2_reg: {}".format(loss_l2_reg),
-#                          "out_dim: {}".format(out_dim),
-#                          "crop_size: {}".format(crop_size)])
-#        f.write(text)
+
     logger.save(dir_name)
     p.save(dir_name)
