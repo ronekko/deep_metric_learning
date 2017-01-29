@@ -126,7 +126,7 @@ if __name__ == '__main__':
     p.loss_l2_reg = 0.001
     p.crop_size = 227
     p.num_epochs = 5000
-    p.num_batches_per_epoch = 20
+    p.num_batches_per_epoch = 500
 
     ##########################################################
     # load database
