@@ -144,7 +144,7 @@ if __name__ == '__main__':
     optimizer.setup(model)
 
     logger = common.Logger(log_dir_path)
-    logger['soft_test_best'] = [0]
+    logger.soft_test_best = [0]
     time_origin = time.time()
     try:
         for epoch in range(p.num_epochs):
@@ -197,26 +197,24 @@ if __name__ == '__main__':
             print
             logger.epoch = epoch
             logger.total_time = total_time
-            logger['loss_log'].append(loss_average)
-            logger['train_log'].append([soft[0], hard[0], retrieval[0]])
-            logger['test_log'].append(
+            logger.loss_log.append(loss_average)
+            logger.train_log.append([soft[0], hard[0], retrieval[0]])
+            logger.test_log.append(
                 [soft_test[0], hard_test[0], retrieval_test[0]])
 
             # retain the model if it scored the best test acc. ever
-            if soft_test[0] > logger['soft_test_best'][0]:
-                logger['model_best'] = copy.deepcopy(model)
-                logger['optimizer_best'] = copy.deepcopy(optimizer)
-                logger['epoch_best'] = epoch
-                logger['D_best'] = D
-                logger['D_test_best'] = D_test
-                logger['soft_best'] = soft
-                logger['soft_test_best'] = soft_test
-                logger['hard_best'] = hard
-                logger['hard_test_best'] = hard_test
-                logger['retrieval_best'] = retrieval
-                logger['retrieval_test_best'] = retrieval_test
-
-
+            if soft_test[0] > logger.soft_test_best[0]:
+                logger.model_best = copy.deepcopy(model)
+                logger.optimizer_best = copy.deepcopy(optimizer)
+                logger.epoch_best = epoch
+                logger.D_best = D
+                logger.D_test_best = D_test
+                logger.soft_best = soft
+                logger.soft_test_best = soft_test
+                logger.hard_best = hard
+                logger.hard_test_best = hard_test
+                logger.retrieval_best = retrieval
+                logger.retrieval_test_best = retrieval_test
 
             # Draw plots
             plt.figure(figsize=(8, 4))
@@ -230,12 +228,12 @@ if __name__ == '__main__':
 
             plt.figure(figsize=(8, 4))
             plt.subplot(1, 2, 1)
-            plt.plot(logger['loss_log'], label="tr-loss")
+            plt.plot(logger.loss_log, label="tr-loss")
             plt.grid()
             plt.legend(loc='best')
             plt.subplot(1, 2, 2)
-            plt.plot(logger['train_log'])
-            plt.plot(logger['test_log'])
+            plt.plot(logger.train_log)
+            plt.plot(logger.test_log)
             plt.grid()
             plt.legend(["tr-soft", "tr-hard", "tr-retr",
                         "te-soft", "te-hard", "te-retr"],
@@ -254,7 +252,7 @@ if __name__ == '__main__':
         pass
 
     dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%H%S"),
-                         str(logger['retrieval_test_best'][0])])
+                         str(logger.retrieval_test_best[0])])
 
     logger.save(dir_name)
     p.save(dir_name)
