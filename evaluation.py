@@ -92,11 +92,11 @@ def ap_cluster_k(x, K, preference_init=-1.0, max_iter=30,
     print
     for i in range(iter_finetune):
         p = np.random.normal(p_best, (p_upper - p_lower) / 2)
-        ap = AffinityPropagation(preference=p).fit(y)
-        k_current = len(ap.cluster_centers_indices_)
         if p < p_lower or p > p_upper:  # where p is rejected
             print 'reject'
             continue
+        ap = AffinityPropagation(preference=p).fit(y)
+        k_current = len(ap.cluster_centers_indices_)
         if k_current < K and p > p_lower:
             p_lower = p
         elif k_current > K and p < p_upper:
