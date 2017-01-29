@@ -11,6 +11,7 @@ import itertools
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import euclidean_distances
 
 from chainer import Variable
 from chainer import Optimizer
@@ -20,33 +21,34 @@ from chainer.dataset.convert import concat_examples
 import cupy
 
 
-# average accuracy and distance matrix for test data
-def evaluate(model, epoch_iterator, train=False):
-    it = copy.copy(epoch_iterator)
-    num_examples = len(it.dataset)
-    # fprop to calculate distance matrix (not for backprop)
+def iterate_forward(model, epoch_iterator, train=False, normalize=False):
     y_batches = []
     c_batches = []
-    for batch in it:
+    for batch in copy.copy(epoch_iterator):
         x_batch_data, c_batch_data = concat_examples(batch)
         x_batch = Variable(cupy.asarray(x_batch_data), volatile=not train)
         y_batch = model(x_batch)
-        y_batches.append(y_batch.data)
+        if normalize:
+            y_batch_data = y_batch.data / cupy.linalg.norm(
+                y_batch.data, axis=1, keepdims=True)
+        else:
+            y_batch_data = y_batch.data
+        y_batches.append(y_batch_data)
         y_batch = None
         c_batches.append(c_batch_data)
-    y_data = cupy.concatenate(y_batches)
+    y_data = cupy.concatenate(y_batches).get()
     c_data = np.concatenate(c_batches)
+    return y_data, c_data
+
+
+# average accuracy and distance matrix for test data
+def evaluate(model, epoch_iterator, train=False, normalize=False):
+    # fprop to calculate distance matrix (not for backprop)
+    y_data, c_data = iterate_forward(
+        model, epoch_iterator, train=False, normalize=False)
 
     # compute the distance matrix of the list of ys
-    D = cupy.empty((num_examples, num_examples), dtype=np.float32)
-    stop = 0
-    for y_batch in y_batches:
-        start = stop
-        stop += len(y_batch)
-        D[start:stop] = cupy.sum(
-            (cupy.expand_dims(y_batch, 1) - cupy.expand_dims(y_data, 0)) ** 2,
-            axis=2)
-    D = cupy.sqrt(D).get()
+    D = euclidean_distances(y_data, squared=False)
 
     softs = []
     hards = []
