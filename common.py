@@ -5,12 +5,17 @@ Created on Thu Nov 03 01:55:58 2016
 @author: sakurai
 """
 
+from collections import defaultdict
 import copy
 import itertools
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
 from chainer import Variable
+from chainer import Optimizer
+from chainer import Chain, ChainList
+from chainer.serializers import save_npz
 from chainer.dataset.convert import concat_examples
 import cupy
 
@@ -131,3 +136,42 @@ class NPairMCIndexMaker(object):
                 epoch_indexes.append((indexes_anchor, indexes_positive))
 
         return epoch_indexes
+
+
+class Logger(defaultdict):
+    def __init__(self, root_dir_path):
+        super(Logger, self).__init__(list)
+        if not os.path.exists(root_dir_path):
+            os.makedirs(root_dir_path)
+        self._root_dir_path = root_dir_path
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def save(self, dir_name):
+        dir_path = os.path.join(self._root_dir_path, dir_name)
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+
+        others = []
+        for key, value in self.iteritems():
+            if key.startswith('_'):
+                continue
+
+            if isinstance(value, (np.ndarray, list)):
+                np.save(os.path.join(dir_path, key + ".npy"), value)
+            elif isinstance(value, (Chain, ChainList)):
+                model_path = os.path.join(dir_path, "model.npz")
+                save_npz(model_path, value)
+            elif isinstance(value, Optimizer):
+                optimizer_path = os.path.join(dir_path, "optimizer.npz")
+                save_npz(optimizer_path, value)
+            else:
+                others.append("{}: {}".format(key, value))
+
+        with open(os.path.join(dir_path, "log.txt"), "a") as f:
+            text = "\n".join(others) + "\n"
+            f.write(text)
