@@ -138,33 +138,40 @@ class NPairMCIndexMaker(object):
         return epoch_indexes
 
 
-class Logger(object):
-    def __init__(self, dir_path):
-        self.dir_path = dir_path
-        if not  os.path.exists(dir_path):
-            os.makedirs(dir_path)
-        self._dict = defaultdict(list)
+class Logger(defaultdict):
+    def __init__(self, root_dir_path):
+        super(Logger, self).__init__(list)
+        if not os.path.exists(root_dir_path):
+            os.makedirs(root_dir_path)
+        self._root_dir_path = root_dir_path
 
-    def append(self, key, value):
-        self._dict[key].append(value)
+    def __getattr__(self, key):
+        return self[key]
 
-    def overwrite(self, key, value):
-        self._dict[key] = value
+    def __setattr__(self, key, value):
+        self[key] = value
 
-    def save(self):
+    def save(self, dir_name):
+        dir_path = os.path.join(self._root_dir_path, dir_name)
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+
         others = []
-        for key, value in self._dict:
-            if isinstance(value, np.ndarray):
-                np.save(os.path.join(self.dir_path, key + ".npy"), value)
+        for key, value in self.iteritems():
+            if key.startswith('_'):
+                continue
+
+            if isinstance(value, (np.ndarray, list)):
+                np.save(os.path.join(dir_path, key + ".npy"), value)
             elif isinstance(value, (Chain, ChainList)):
-                model_path = os.path.join(self.dir_path, "model.npz")
+                model_path = os.path.join(dir_path, "model.npz")
                 save_npz(model_path, value)
-            elif isinstance(value, (Optimizer)):
-                optimizer_path = os.path.join(self.dir_path, "optimizer.npz")
+            elif isinstance(value, Optimizer):
+                optimizer_path = os.path.join(dir_path, "optimizer.npz")
                 save_npz(optimizer_path, value)
             else:
                 others.append("{}: {}".format(key, value))
 
-        with open(os.path.join(self.dir_path, "log.txt"), "w") as f:
-            text = "\n".join(others)
+        with open(os.path.join(dir_path, "log.txt"), "a") as f:
+            text = "\n".join(others) + "\n"
             f.write(text)
