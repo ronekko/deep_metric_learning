@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     p = common.Logger(log_dir_path)  # hyperparameters
     p.learning_rate = 0.0001  # 0.0001 is good
-    p.batch_size = 60
+    p.batch_size = 120
     p.out_dim = 64
     p.loss_l2_reg = 0.001
     p.crop_size = 224
