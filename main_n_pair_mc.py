@@ -57,48 +57,48 @@ class Model(chainer.Chain):  # same as classifier
             linear2=L.Linear(400, out_dim)
         )
 
-    def __call__(self, x, test=True):
+    def __call__(self, x, train=False):
         h = self.conv1(x)
-        h = self.bn_conv1(h, test=test)
+        h = self.bn_conv1(h, test=not train)
         h = F.max_pooling_2d(h, 2)
         h = F.relu(h)
 
         h = self.conv21(h)
-        h = self.bn_conv21(h, test=test)
+        h = self.bn_conv21(h, test=not train)
         h = F.relu(h)
         h = self.conv22(h)
-        h = self.bn_conv22(h, test=test)
+        h = self.bn_conv22(h, test=not train)
         h = F.max_pooling_2d(h, 2)
         h = F.relu(h)
 
         h = self.conv31(h)
-        h = self.bn_conv31(h, test=test)
+        h = self.bn_conv31(h, test=not train)
         h = F.relu(h)
         h = self.conv32(h)
-        h = self.bn_conv32(h, test=test)
+        h = self.bn_conv32(h, test=not train)
         h = F.max_pooling_2d(h, 2)
         h = F.relu(h)
 
         h = self.conv41(h)
-        h = self.bn_conv41(h, test=test)
+        h = self.bn_conv41(h, test=not train)
         h = F.relu(h)
         h = self.conv42(h)
-        h = self.bn_conv42(h, test=test)
+        h = self.bn_conv42(h, test=not train)
         h = F.max_pooling_2d(h, 2)
         h = F.relu(h)
 
         h = self.conv5(h)
-        h = self.bn_conv5(h, test=test)
+        h = self.bn_conv5(h, test=not train)
         h = F.relu(h)
 
         h = self.conv6(h)
-        h = self.bn_conv6(h, test=test)
+        h = self.bn_conv6(h, test=not train)
         h = F.relu(h)
 
         h = F.average_pooling_2d(h, h.shape[2:])
         h = self.linear1(h)
-        h = self.bn_linear1(h, test=test)
-#        h = F.dropout(h, ratio=0.5, train=not test)
+        h = self.bn_linear1(h, test=not train)
+#        h = F.dropout(h, ratio=0.5, train=train)
         h = F.relu(h)
         h = self.linear2(h)
         return h
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                 # are the positive examples corresponding to each anchor
                 batch = next(iter_train)
                 x_data, c_data = concat_examples(batch, device)
-                y = model(x_data, test=False)
+                y = model(x_data, train=True)
                 y_a, y_p = F.split_axis(y, 2, axis=0)
 
                 loss = n_pair_mc_loss(y_a, y_p, p.loss_l2_reg)
