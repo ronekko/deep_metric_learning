@@ -27,7 +27,7 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
     for batch in copy.copy(epoch_iterator):
         x_batch_data, c_batch_data = concat_examples(batch)
         x_batch = Variable(cupy.asarray(x_batch_data), volatile=not train)
-        y_batch = model(x_batch)
+        y_batch = model(x_batch, train=train)
         if normalize:
             y_batch_data = y_batch.data / cupy.linalg.norm(
                 y_batch.data, axis=1, keepdims=True)
@@ -42,7 +42,7 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
 
 
 # average accuracy and distance matrix for test data
-def evaluate(model, epoch_iterator, train=False, normalize=False):
+def evaluate(model, epoch_iterator, normalize=False):
     # fprop to calculate distance matrix (not for backprop)
     y_data, c_data = iterate_forward(
         model, epoch_iterator, train=False, normalize=False)
