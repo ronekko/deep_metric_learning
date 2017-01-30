@@ -133,7 +133,6 @@ if __name__ == '__main__':
     ##########################################################
     iters = chainer_datasets.get_iterators(p.batch_size)
     iter_train, iter_train_eval, iter_test = iters
-#    num_batches_per_epoch = iter_train._order_sampler.num_batches
 
     ##########################################################
     # construct the model
@@ -190,8 +189,8 @@ if __name__ == '__main__':
             print "[test]  soft:", soft_test
             print "[test]  hard:", hard_test
             print "[test]  retr:", retrieval_test
-            print "lr:{}, l2_loss_reg:{}, bs:{}".format(
-                p.learning_rate, p.loss_l2_reg, p.batch_size)
+            print "lr:{}, l2_loss_reg:{}, bs:{}, out_dim:{}".format(
+                p.learning_rate, p.loss_l2_reg, p.batch_size, p.out_dim)
             # print norms of the weights
             print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
             print
@@ -252,7 +251,7 @@ if __name__ == '__main__':
         pass
 
     dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%H%S"),
-                         str(logger.retrieval_test_best[0])])
+                         str(logger.soft_test_best[0])])
 
     logger.save(dir_name)
     p.save(dir_name)
