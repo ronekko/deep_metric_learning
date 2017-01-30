@@ -28,6 +28,7 @@ from n_pair_mc_loss import n_pair_mc_loss
 import common
 from datasets import get_cars196_streams
 import chainer_datasets
+from models import ModifiedGoogLeNet
 
 colorama.init()
 
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     p.batch_size = 60
     p.out_dim = 64
     p.loss_l2_reg = 0.001
-    p.crop_size = 227
+    p.crop_size = 224
     p.num_epochs = 5000
     p.num_batches_per_epoch = 500
 
@@ -137,7 +138,7 @@ if __name__ == '__main__':
     ##########################################################
     # construct the model
     ##########################################################
-    model = Model(p.out_dim).to_gpu()
+    model = ModifiedGoogLeNet(p.out_dim).to_gpu()
     model = model.to_gpu()
     optimizer = optimizers.Adam(p.learning_rate)
     optimizer.setup(model)
