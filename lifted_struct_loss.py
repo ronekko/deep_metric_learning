@@ -26,7 +26,7 @@ def lifted_struct_loss(f_a, f_p, alpha=1.0):
             All examples must be different classes each other.
         f_p (~chainer.Variable): Positive examples corresponding to f_a.
             Each example must be the same class for each example in f_a.
-        alpha (~float): A weight of L2 regularization for feature vectors.
+        alpha (~float): The margin parameter.
 
     Returns:
         ~chainer.Variable: Loss value.
