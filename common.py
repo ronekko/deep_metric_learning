@@ -45,7 +45,7 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
 def evaluate(model, epoch_iterator, normalize=False):
     # fprop to calculate distance matrix (not for backprop)
     y_data, c_data = iterate_forward(
-        model, epoch_iterator, train=False, normalize=False)
+        model, epoch_iterator, train=False, normalize=normalize)
 
     # compute the distance matrix of the list of ys
     D = euclidean_distances(y_data, squared=False)
