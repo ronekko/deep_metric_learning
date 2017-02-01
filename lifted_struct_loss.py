@@ -8,6 +8,10 @@ Created on Tue Jan 31 15:40:26 2017
 import numpy as np
 import chainer.functions as F
 
+from get_item_mod import get_item
+#from get_item_mod import install_variable_get_item
+#install_variable_get_item()
+
 
 def squared_distance_matrix(X):
     n = X.shape[0]
@@ -51,8 +55,16 @@ def lifted_struct_loss(f_a, f_p, alpha=1.0):
     col = np.ravel(col)
     pairs_n = np.vstack((row, col))
 
-    distances_p = F.sqrt(D_sq[pairs_p[0], pairs_p[1]])
-    distances_n = F.sqrt(D_sq[pairs_n[0], pairs_n[1]])
+    indexes_p = n * pairs_p[0] + pairs_p[1]
+    indexes_n = n * pairs_n[0] + pairs_n[1]
+    D_sq_flat = F.flatten(D_sq)
+    distances_p = F.sqrt(get_item(D_sq_flat, indexes_p))
+    distances_n = F.sqrt(get_item(D_sq_flat, indexes_n))
+
+    # The above should be written as below...
+    # distances_p = F.sqrt(D_sq[pairs_p[0], pairs_p[1]])
+    # distances_n = F.sqrt(D_sq[pairs_n[0], pairs_n[1]])
+
     distances_n = F.reshape(distances_n, (n / 2, -1))
     loss_ij = F.logsumexp(alpha - distances_n, axis=1) + distances_p
     return F.sum(F.relu(loss_ij) ** 2) / n
@@ -66,4 +78,23 @@ if __name__ == '__main__':
     f_a = np.random.randn(N / 2, D).astype(np.float32)
     f_p = np.random.randn(N / 2, D).astype(np.float32)
 
-    loss = lifted_struct_loss(f_a, f_p, alpha)
+    import chainer
+    f_a_cpu = chainer.Variable(f_a)
+    f_p_cpu = chainer.Variable(f_p)
+    loss_cpu = lifted_struct_loss(f_a_cpu, f_p_cpu, alpha)
+    loss_cpu.backward()
+    ########
+    import cupy
+    f_a = cupy.asarray(f_a)
+    f_p = cupy.asarray(f_p)
+    f_a_gpu = chainer.Variable(f_a)
+    f_p_gpu = chainer.Variable(f_p)
+    ########
+
+    loss_gpu = lifted_struct_loss(f_a_gpu, f_p_gpu, alpha)
+    loss_gpu.backward()
+
+
+    assert np.allclose(f_a_cpu.grad, f_a_gpu.grad.get())
+    assert np.allclose(f_p_cpu.grad, f_p_gpu.grad.get(), rtol=1e-3)
+    assert np.allclose(loss_cpu.grad, loss_gpu.grad.get())
