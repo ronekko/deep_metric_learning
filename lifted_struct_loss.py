@@ -46,7 +46,7 @@ def lifted_struct_loss(f_a, f_p, alpha=1.0):
     col = []
     for i, j in pairs_p.T:
         row.append([i] * (n - 2) + [j] * (n - 2))
-        col.append(np.tile(np.delete(np.arange(N), (i, j)), 2))
+        col.append(np.tile(np.delete(np.arange(n), (i, j)), 2))
     row = np.ravel(row)
     col = np.ravel(col)
     pairs_n = np.vstack((row, col))
