@@ -9,25 +9,18 @@ import os
 import time
 import copy
 import ConfigParser
-from multiprocessing import Process, Queue
 import numpy as np
 import matplotlib.pyplot as plt
 
 import chainer
 import chainer.functions as F
-import chainer.links as L
 from chainer import optimizers
-from chainer import serializers
-from chainer import Variable
 from chainer.dataset.convert import concat_examples
-from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 import colorama
 
-from n_pair_mc_loss import n_pair_mc_loss
 from lifted_struct_loss import lifted_struct_loss
 import common
-from datasets import get_cars196_streams
 import chainer_datasets
 from models import ModifiedGoogLeNet
 
