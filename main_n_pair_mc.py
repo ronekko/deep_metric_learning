@@ -99,11 +99,12 @@ if __name__ == '__main__':
             loss_average = np.mean(epoch_losses)
 
             # average accuracy and distance matrix for training data
-            D, soft, hard, retrieval = common.evaluate(model, iter_train_eval)
+            D, soft, hard, retrieval = common.evaluate(
+                model, iter_train_eval, 'cosine')
 
             # average accuracy and distance matrix for testing data
-            result_test = common.evaluate(model, iter_test)
-            D_test, soft_test, hard_test, retrieval_test = result_test
+            D_test, soft_test, hard_test, retrieval_test = common.evaluate(
+                model, iter_test, 'cosine')
 
             time_end = time.time()
             epoch_time = time_end - time_begin

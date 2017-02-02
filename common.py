@@ -11,7 +11,7 @@ import itertools
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
 
 from chainer import Variable
 from chainer import Optimizer
@@ -42,36 +42,46 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
 
 
 # average accuracy and distance matrix for test data
-def evaluate(model, epoch_iterator, normalize=False):
+def evaluate(model, epoch_iterator, distance='euclidean', normalize=False):
     # fprop to calculate distance matrix (not for backprop)
     y_data, c_data = iterate_forward(
         model, epoch_iterator, train=False, normalize=normalize)
 
     # compute the distance matrix of the list of ys
-    D = euclidean_distances(y_data, squared=False)
+    if distance == 'euclidean':
+        D = euclidean_distances(y_data, squared=False)
+    elif distance == 'cosine':
+        D = cosine_distances(y_data)
+    else:
+        raise ValueError("distance must be 'euclidean' or 'cosine'.")
 
+    soft, hard, retrieval = compute_soft_hard_retrieval(D, c_data)
+    return D, soft, hard, retrieval
+
+
+def compute_soft_hard_retrieval(distance_matrix, labels):
     softs = []
     hards = []
     retrievals = []
-    for sqd, id_i in zip(D, c_data):
-        ranked_ids = c_data[np.argsort(sqd)]
+    for d_i, label_i in zip(distance_matrix, labels):
+        ranked_labels = labels[np.argsort(d_i)]
         # 0th entry is excluded since it is always 0
-        result = ranked_ids[1:] == id_i
+        ranked_hits = ranked_labels[1:] == label_i
 
         # soft top-k, k = 1, 2, 5, 10
-        soft = [np.any(result[:k]) for k in [1, 2, 5, 10]]
+        soft = [np.any(ranked_hits[:k]) for k in [1, 2, 5, 10]]
         softs.append(soft)
         # hard top-k, k = 2, 3, 4
-        hard = [np.all(result[:k]) for k in [2, 3, 4]]
+        hard = [np.all(ranked_hits[:k]) for k in [2, 3, 4]]
         hards.append(hard)
         # retrieval top-k, k = 2, 3, 4
-        retrieval = [np.mean(result[:k]) for k in [2, 3, 4]]
+        retrieval = [np.mean(ranked_hits[:k]) for k in [2, 3, 4]]
         retrievals.append(retrieval)
 
     average_soft = np.array(softs).mean(axis=0)
     average_hard = np.array(hards).mean(axis=0)
     average_retrieval = np.array(retrievals).mean(axis=0)
-    return D, average_soft, average_hard, average_retrieval
+    return average_soft, average_hard, average_retrieval
 
 
 def make_positive_pairs(num_classes, num_examples_per_class, repetition=1):
