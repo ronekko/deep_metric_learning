@@ -51,6 +51,7 @@ if __name__ == '__main__':
     p.crop_size = 224
     p.num_epochs = 40
     p.num_batches_per_epoch = 500
+    p.distance_type = 'euclidean'  # 'euclidean' or 'cosine'
 
     ##########################################################
     # load database
@@ -96,11 +97,11 @@ if __name__ == '__main__':
 
             # average accuracy and distance matrix for training data
             D, soft, hard, retrieval = common.evaluate(
-                model, iter_train_eval, 'cosine')
+                model, iter_train_eval, p.distance_type)
 
             # average accuracy and distance matrix for testing data
             D_test, soft_test, hard_test, retrieval_test = common.evaluate(
-                model, iter_test, 'cosine')
+                model, iter_test, p.distance_type)
 
             time_end = time.time()
             epoch_time = time_end - time_begin
