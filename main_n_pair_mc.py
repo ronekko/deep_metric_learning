@@ -46,9 +46,10 @@ if __name__ == '__main__':
     p.learning_rate = 0.0001  # 0.0001 is good
     p.batch_size = 120
     p.out_dim = 64
-    p.loss_l2_reg = 0.001
+    p.loss_l2_reg = 0.001  # penalty for the norm of the output vector
+    p.l2_weight_decay = 0.001
     p.crop_size = 224
-    p.num_epochs = 5000
+    p.num_epochs = 40
     p.num_batches_per_epoch = 500
 
     ##########################################################
@@ -64,6 +65,7 @@ if __name__ == '__main__':
     model = model.to_gpu()
     optimizer = optimizers.Adam(p.learning_rate)
     optimizer.setup(model)
+    optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
 
     logger = common.Logger(log_dir_path)
     logger.soft_test_best = [0]
@@ -113,8 +115,9 @@ if __name__ == '__main__':
             print "[test]  soft:", soft_test
             print "[test]  hard:", hard_test
             print "[test]  retr:", retrieval_test
-            print "lr:{}, l2_loss_reg:{}, bs:{}, out_dim:{}".format(
-                p.learning_rate, p.loss_l2_reg, p.batch_size, p.out_dim)
+            print "lr:{}, l2_loss_reg:{}, bs:{}, out_dim:{}, l2_wd:{}".format(
+                p.learning_rate, p.loss_l2_reg, p.batch_size, p.out_dim,
+                p.l2_weight_decay)
             # print norms of the weights
             print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
             print
