@@ -64,7 +64,7 @@ if __name__ == '__main__':
     ##########################################################
     model = ModifiedGoogLeNet(p.out_dim).to_gpu()
     model = model.to_gpu()
-    optimizer = optimizers.Adam(p.learning_rate)
+    optimizer = optimizers.RMSprop(p.learning_rate)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
 
