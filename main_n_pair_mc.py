@@ -116,9 +116,10 @@ if __name__ == '__main__':
             print "[test]  soft:", soft_test
             print "[test]  hard:", hard_test
             print "[test]  retr:", retrieval_test
-            print "lr:{}, l2_loss_reg:{}, bs:{}, out_dim:{}, l2_wd:{}".format(
+            print ("lr:{}, l2_loss_reg:{}, bs:{}, out_dim:{}, l2_wd:{}, "
+                   "evanluation:{}").format(
                 p.learning_rate, p.loss_l2_reg, p.batch_size, p.out_dim,
-                p.l2_weight_decay)
+                p.l2_weight_decay, p.distance_type)
             # print norms of the weights
             print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
             print
