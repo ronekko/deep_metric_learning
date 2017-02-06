@@ -131,13 +131,13 @@ def clustering_loss(x, t, gamma, T=5):
     # Here, compute the loss with S_PAM and its corresponding delta.
     y_pam = np.asarray(s_pam)[D[s_pam].argmin(axis=0)].tolist()
 
-    y_star = []
+    y_star = np.empty_like(t_cpu)
     for c in np.unique(t_cpu):
         js = np.argwhere(t_cpu == c).ravel()  # indexes of examples of class c
         D_c = D[js]
         fs = D_c.sum(axis=1)
         y_star_c = js[fs.argmax()]
-        y_star.append(y_star_c)
+        y_star[js] = y_star_c
 
     f = -F.sum(F.sqrt(F.batch_l2_norm_squared(x - get_item(x, y_pam))))
     f_tilde = -F.sum(F.sqrt(F.batch_l2_norm_squared(x - get_item(x, y_star))))
