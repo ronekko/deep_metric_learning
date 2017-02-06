@@ -10,6 +10,20 @@ from chainer.utils import type_check
 from chainer import variable
 
 
+def slices_to_indexes(slices, shape):
+    """Get a flat 1D-array of integer indexes which is specified by the given
+    slices to the shape.
+    """
+    if not isinstance(slices, tuple):
+        slices = (slices,)
+    index_subtensor = numpy.arange(numpy.prod(shape)).reshape(shape)
+    none_slice = slice(None, None, None)  # [:], slice of end-to-end
+    for d, slice_ in enumerate(slices):
+        dth_indexes = (none_slice,) * d + (slice_, )
+        index_subtensor = index_subtensor[dth_indexes]
+    return index_subtensor.ravel()
+
+
 class GetItem(function.Function):
 
     """Function that slices array and extract elements."""
