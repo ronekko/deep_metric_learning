@@ -97,31 +97,26 @@ class TestInvalidGetItem(unittest.TestCase):
         with self.assertRaises(type_check.InvalidType):
             functions.get_item(self.x_data, (0, 0, 0, 0))
 
-    def test_advanced_indexing_tuple_of_list(self):
-        with self.assertRaises(ValueError):
-            functions.get_item(self.x_data, ([0, 0, 0],))
-
     def test_advanced_indexing_nested_list(self):
         with self.assertRaises(ValueError):
             functions.get_item(self.x_data, [[0, 0, 0]])
 
-    def test_advanced_indexing_for_non_flat_array(self):
-        with self.assertRaises(type_check.InvalidType):
-            functions.get_item(self.x_data, [0, 0, 0])
-
 
 @parameterize(
-    {'slices': [0, 1, 2, 3, 4], 'sliced_shape': (5,)},
-    {'slices': [1, 2, 3], 'sliced_shape': (3,)},
-    {'slices': [2], 'sliced_shape': (1,)},
-    {'slices': [0, 0], 'sliced_shape': (2,)},
-    {'slices': [4, 4, 1, 1, 1, 3], 'sliced_shape': (6,)}
+    {'shape': (5,), 'slices': [0, 1, 2, 3, 4], 'sliced_shape': (5,)},
+    {'shape': (5,), 'slices': [1, 2, 3], 'sliced_shape': (3,)},
+    {'shape': (5,), 'slices': [2], 'sliced_shape': (1,)},
+    {'shape': (5,), 'slices': [0, 0], 'sliced_shape': (2,)},
+    {'shape': (5,), 'slices': [4, 4, 1, 1, 1, 3], 'sliced_shape': (6,)},
+    {'shape': (5, 4), 'slices': [1, 1, 1], 'sliced_shape': (3, 4)},
+    {'shape': (5, 4), 'slices': ([1, 1, 1],), 'sliced_shape': (3, 4)},
+    {'shape': (5, 4), 'slices': (slice(None, None, None), [1, 1, 1]),
+     'sliced_shape': (5, 3)}
 )
 class TestGetItemAdvancedIndexing(unittest.TestCase):
 
     def setUp(self):
-        self.x_data = numpy.random.uniform(-1, 1, 5)
-        self.shape = (10,)
+        self.x_data = numpy.random.uniform(-1, 1, self.shape)
         self.gy_data = numpy.random.uniform(-1, 1, self.sliced_shape)
 
     def check_forward(self, x_data):

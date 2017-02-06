@@ -10,6 +10,20 @@ from chainer.utils import type_check
 from chainer import variable
 
 
+def slices_to_indexes(slices, shape):
+    """Get a flat 1D-array of integer indexes which is specified by the given
+    slices to the shape.
+    """
+    if not isinstance(slices, tuple):
+        slices = (slices,)
+    index_subtensor = numpy.arange(numpy.prod(shape)).reshape(shape)
+    none_slice = slice(None, None, None)  # [:], slice of end-to-end
+    for d, slice_ in enumerate(slices):
+        dth_indexes = (none_slice,) * d + (slice_, )
+        index_subtensor = index_subtensor[dth_indexes]
+    return index_subtensor.ravel()
+
+
 class GetItem(function.Function):
 
     """Function that slices array and extract elements."""
@@ -21,13 +35,21 @@ class GetItem(function.Function):
             if not slices.ndim == 1:
                 raise ValueError('Advanced indexing currently supports '
                                  'only one dimensional list or ndarray')
-        elif not isinstance(slices, collections.Iterable):
-            slices = tuple([slices])
+        if not isinstance(slices, tuple):
+            slices = (slices,)
+
+        self._basic_indexing = True
+        for s in slices:
+            if isinstance(s, (list, numpy.ndarray)):
+                self._basic_indexing = False
+                break
+        self.slices = slices
 
         if chainer.is_debug():
             n_ellipses = 0
             for s in slices:
-                if numpy.isscalar(s) or s is None or isinstance(s, slice):
+                if numpy.isscalar(s) or s is None or isinstance(s,
+                        (slice, list, numpy.ndarray)):
                     pass
                 elif s is Ellipsis:
                     n_ellipses += 1
@@ -35,8 +57,6 @@ class GetItem(function.Function):
                     raise ValueError('Only basic indexing is supported')
             if n_ellipses > 1:
                 raise ValueError('Only one Ellipsis is allowed')
-
-        self.slices = slices
 
     def check_type_forward(self, in_types):
         type_check.expect(in_types.size() == 1)
@@ -51,15 +71,18 @@ class GetItem(function.Function):
         return utils.force_array(ary[self.slices]),
 
     def backward(self, xs, gys):
-        xp = cuda.get_array_module(*xs)
+        x = xs[0]
         gy = gys[0]
-        if isinstance(self.slices, numpy.ndarray):
-            slices = xp.asarray(self.slices)
-            gx = xp.bincount(slices, gy, len(xs[0]))
-            gx = gx.astype(gy.dtype)
-        else:
-            gx = xp.zeros_like(xs[0])
+        xp = cuda.get_array_module(x)
+        print self._basic_indexing
+        print self.slices
+        if self._basic_indexing:
+            gx = xp.zeros_like(x)
             gx[self.slices] = gy
+        else:
+            flat_indexes = xp.asarray(slices_to_indexes(self.slices, x.shape))
+            gx = xp.bincount(flat_indexes, gy.ravel(), x.size)
+            gx = gx.reshape(x.shape).astype(gy.dtype)
         return gx,
 
 
