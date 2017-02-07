@@ -72,7 +72,7 @@ def clustering_loss(x, t, gamma, T=5):
             f = -distances[g_s, range(batch_size)].sum()
             if f + gamma < a_best:  # skip if this is hopeless to be the best
                 continue
-            delta = normalized_mutual_info_score(t_cpu, g_s)
+            delta = 1.0 - normalized_mutual_info_score(t_cpu, g_s)
             a = f + gamma * delta
             if a > a_best:
                 a_best = a
@@ -102,7 +102,7 @@ def clustering_loss(x, t, gamma, T=5):
                 if f + gamma < f_max:
                     continue
                 g_s_j = D[s_except_k + [j]].argmin(axis=0)
-                delta = normalized_mutual_info_score(t_cpu, g_s_j)
+                delta = 1.0 - normalized_mutual_info_score(t_cpu, g_s_j)
                 a = f + gamma * delta
                 if a > a_best:
                     a_best = a
@@ -113,7 +113,7 @@ def clustering_loss(x, t, gamma, T=5):
         distances = D[s]
         g_s = distances.argmin(axis=0)
         f = -distances[g_s, range(batch_size)].sum()
-        delta = normalized_mutual_info_score(t_cpu, g_s)
+        delta = 1.0 - normalized_mutual_info_score(t_cpu, g_s)
         a = f + gamma * delta
         if a == a_previous:
             break
