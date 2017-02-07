@@ -48,8 +48,8 @@ class GetItem(function.Function):
         if chainer.is_debug():
             n_ellipses = 0
             for s in slices:
-                if numpy.isscalar(s) or s is None or isinstance(s,
-                        (slice, list, numpy.ndarray)):
+                if numpy.isscalar(s) or s is None or isinstance(
+                        s, (slice, list, numpy.ndarray)):
                     pass
                 elif s is Ellipsis:
                     n_ellipses += 1
@@ -74,8 +74,6 @@ class GetItem(function.Function):
         x = xs[0]
         gy = gys[0]
         xp = cuda.get_array_module(x)
-        print self._basic_indexing
-        print self.slices
         if self._basic_indexing:
             gx = xp.zeros_like(x)
             gx[self.slices] = gy

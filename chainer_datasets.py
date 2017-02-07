@@ -71,19 +71,39 @@ def make_n_pairs_mc_iterator(x, labels, batch_size, multiprocess=False,
     return it
 
 
-def make_epoch_iterator(x, labels, batch_size, multiprocess=False):
+def make_simple_iterator(x, labels, batch_size, repeat=False, shuffle=False,
+                         multiprocess=False):
     dataset = RandomCropFlipDataset(x, labels)
     if multiprocess:
-        it = MultiprocessIterator(dataset, batch_size, repeat=False,
-                                  shuffle=False, n_processes=3)
+        it = MultiprocessIterator(dataset, batch_size, repeat=repeat,
+                                  shuffle=shuffle, n_processes=3)
     else:
-        it = SerialIterator(dataset, batch_size, repeat=False, shuffle=False)
+        it = SerialIterator(dataset, batch_size, repeat=repeat,
+                            shuffle=shuffle)
     return it
 
 
-def get_iterators(batch_size=50):
+def make_epoch_iterator(x, labels, batch_size, multiprocess=False):
+    return make_simple_iterator(x, labels, batch_size, multiprocess)
+
+
+def get_iterators(batch_size=50, method='n_pairs_mc'):
+    '''
+    args:
+       batch_size (int):
+           number of examples per batch
+       method (str):
+           batch construction method. Select from 'n_pairs_mc', 'clustering'.
+    '''
+
     train, test = cars196_dataset.load_as_ndarray(['train', 'test'])
-    iter_train = make_n_pairs_mc_iterator(train[0], train[1], batch_size)
+    if method == 'n_pairs_mc':
+        iter_train = make_n_pairs_mc_iterator(train[0], train[1], batch_size)
+    elif method == 'clustering':
+        iter_train = make_simple_iterator(train[0], train[1], batch_size,
+                                          repeat=True, shuffle=True)
+    else:
+        raise ValueError("`method` must be 'n_pairs_mc' or 'clustering'.")
     iter_train_eval = make_epoch_iterator(train[0], train[1], batch_size)
     iter_test = make_epoch_iterator(test[0], test[1], batch_size)
     return iter_train, iter_train_eval, iter_test
