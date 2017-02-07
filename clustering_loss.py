@@ -22,14 +22,7 @@ def distance_matrix(x):
     xx = xp.sum(x ** 2.0, axis=1)
     mat = xx + xx[:, None] - 2.0 * xp.dot(x, x.T)
     # ensure the diagonal components are zero
-    if xp is np:
-        np.fill_diagonal(mat, 0)
-    else:
-        n = len(mat)
-        mat = mat.ravel()
-        ii = [i * n + i for i in range(n)]
-        mat[ii] = 0
-        mat = mat.reshape(n, n)
+    xp.fill_diagonal(mat, 0)
     return mat
 
 
