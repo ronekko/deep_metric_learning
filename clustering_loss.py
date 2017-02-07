@@ -87,7 +87,8 @@ def clustering_loss(x, t, gamma, T=5):
         np.random.shuffle(s)
         distances = D[s]
         y_pam = np.asarray(s)[distances.argmin(axis=0)]
-        for k in copy.copy(s):
+        s_previous = copy.copy(s)
+        for k in s_previous:
             js = np.argwhere(y_pam == k).ravel()
             if len(js) == 1:
                 continue
@@ -148,6 +149,7 @@ if __name__ == '__main__':
     K = 99  # number of classes
     gamma = 1.0
 
+#    np.random.seed(0)
     _i = np.random.choice(N, M, False)
     _x = x_test[_i]
     _c = c_test[_i]
@@ -155,3 +157,4 @@ if __name__ == '__main__':
     with contexttimer.Timer() as timer:
         loss = clustering_loss(_x, _c, gamma)
     print timer.elapsed, ' [s]'
+    print 'loss:', loss.data
