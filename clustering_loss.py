@@ -48,23 +48,22 @@ def clustering_loss(x, t, gamma, T=5):
         x = chainer.Variable(x)
     if not isinstance(t, chainer.Variable):
         t = chainer.Variable(t)
+    t_cpu = chainer.cuda.to_cpu(t.data).ravel()
 
     xp = chainer.cuda.get_array_module(x.data)
     batch_size = len(t.data)
-    num_classes = len(xp.unique(t.data))
+    num_classes = len(np.unique(t_cpu))
 
     v = range(batch_size)
     s = []
-
-    x.to_gpu()
-    t.to_gpu()
-    t_cpu = chainer.cuda.to_cpu(t.data)
 
     # First, search the sub-optimal solution y_PAM of the clustering.
     # Note that this computation is done outside the computational graph.
     # Find an initial medoids of S_PAM by Algorithm 1 in the paper.
     a_best = -np.inf
-    D = distance_matrix(x.data).get()
+    D = distance_matrix(x.data)
+    if xp is chainer.cuda.cupy:
+        D = D.get()
     for _ in range(num_classes):
         # find an element in v which maximise a_function
         for i in v:
