@@ -126,9 +126,9 @@ def clustering_loss(x, t, gamma, T=5):
     y_star = np.empty_like(t_cpu)
     for c in np.unique(t_cpu):
         js = np.argwhere(t_cpu == c).ravel()  # indexes of examples of class c
-        D_c = D[js]
+        D_c = D[:, js][js]
         fs = D_c.sum(axis=1)
-        y_star_c = js[fs.argmax()]
+        y_star_c = js[fs.argmin()]
         y_star[js] = y_star_c
 
     f = -F.sum(F.batch_l2_norm_squared(x - get_item(x, y_pam)))
