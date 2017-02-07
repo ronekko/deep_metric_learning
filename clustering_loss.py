@@ -60,12 +60,12 @@ def clustering_loss(x, t, gamma, T=5):
     # First, search the sub-optimal solution y_PAM of the clustering.
     # Note that this computation is done outside the computational graph.
     # Find an initial medoids of S_PAM by Algorithm 1 in the paper.
-    a_best = -np.inf
     D = distance_matrix(x.data)
     if xp is chainer.cuda.cupy:
         D = D.get()
     for _ in range(num_classes):
         # find an element in v which maximise a_function
+        a_best = -np.inf
         for i in v:
             distances = D[s + [i]]
             g_s = distances.argmin(axis=0)
