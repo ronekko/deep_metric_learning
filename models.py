@@ -19,7 +19,7 @@ import googlenet
 
 class ModifiedGoogLeNet(googlenet.GoogLeNet):
 
-    def __init__(self, out_dims=64):
+    def __init__(self, out_dims=64, normalize_output=False):
         super(ModifiedGoogLeNet, self).__init__()
         # remove links and functions
         for name in filter(lambda n: n.startswith('loss'), self._children):
@@ -33,6 +33,7 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
 
         image_mean = np.array([123, 117, 104], dtype=np.float32) / 225.0  # RGB
         self._image_mean = image_mean[None, :, None, None]
+        self.normalize_output = normalize_output
 
     def __call__(self, x, train=False, subtract_mean=True):
         if subtract_mean:
@@ -63,6 +64,8 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
         h = F.average_pooling_2d(h, 7, stride=1)
         h = self.bn_fc(h, test=not train)
         y = self.fc(h)
+        if self.normalize_output:
+            y = F.normalize(y)
         return y
 
     def to_cpu(self, device=None):

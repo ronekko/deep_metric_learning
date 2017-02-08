@@ -48,6 +48,7 @@ if __name__ == '__main__':
     p.batch_size = 100
     p.out_dim = 64
     p.gamma = 50.0
+    p.normalize_output = True
     p.l2_weight_decay = 0.001
     p.crop_size = 224
     p.num_epochs = 40
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     ##########################################################
     # construct the model
     ##########################################################
-    model = ModifiedGoogLeNet(p.out_dim).to_gpu()
+    model = ModifiedGoogLeNet(p.out_dim, p.normalize_output).to_gpu()
     model = model.to_gpu()
     optimizer = optimizers.RMSprop(p.learning_rate)
     optimizer.setup(model)
