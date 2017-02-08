@@ -85,10 +85,11 @@ def clustering_loss(x, t, gamma, T=5):
     a_previous = a_best
     for t in range(T):
         np.random.shuffle(s)
-        distances = D[s]
-        y_pam = np.asarray(s)[distances.argmin(axis=0)]
-        s_previous = copy.copy(s)
-        for k in s_previous:
+        y_pam = np.array(s)[D[s].argmin(axis=0)]
+        # since a column of D may have multiple zeros due to numerical errors,
+        # ensure y_pam[j] == j, for each j \in s
+        y_pam[s] = s
+        for k in copy.copy(s):
             js = np.argwhere(y_pam == k).ravel()
             if len(js) == 1:
                 continue
