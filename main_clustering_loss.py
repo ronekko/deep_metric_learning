@@ -45,11 +45,12 @@ if __name__ == '__main__':
 
     p = common.Logger(log_dir_path)  # hyperparameters
     p.learning_rate = 0.0001  # 0.0001 is good
-    p.batch_size = 100
+    p.batch_size = 120
     p.out_dim = 64
-    p.gamma = 50.0
+    p.gamma = 1.0
+    p.gamma_decay = 0.94
     p.normalize_output = True
-    p.l2_weight_decay = 0.001
+    p.l2_weight_decay = 0  # 0.001
     p.crop_size = 224
     p.num_epochs = 40
     p.num_batches_per_epoch = 500
@@ -118,10 +119,12 @@ if __name__ == '__main__':
             print "[test]  soft:", soft_test
             print "[test]  hard:", hard_test
             print "[test]  retr:", retrieval_test
-            print ("lr:{}, l2_loss_reg:{}, bs:{}, out_dim:{}, l2_wd:{}, "
-                   "evanluation:{}").format(
-                p.learning_rate, p.loss_l2_reg, p.batch_size, p.out_dim,
-                p.l2_weight_decay, p.distance_type)
+            print ("lr:{}, bs:{}, out_dim:{}, l2_wd:{}, gamma:{}, "
+                   "gamma_decay:{}, normalize_output:{}, evanluation:{}"
+                   ).format(
+                        p.learning_rate, p.batch_size, p.out_dim,
+                        p.l2_weight_decay, p.gamma, p.gamma_decay,
+                        p.normalize_output, p.distance_type)
             # print norms of the weights
             print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
             print
@@ -178,7 +181,7 @@ if __name__ == '__main__':
             D = None
             D_test = None
 
-            p.gamma *= 0.97
+            p.gamma *= p.gamma_decay
 
     except KeyboardInterrupt:
         pass
