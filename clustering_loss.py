@@ -21,6 +21,7 @@ def distance_matrix(x, add_epsilon=True):
     xp = chainer.cuda.get_array_module(x)
     xx = xp.sum(x ** 2.0, axis=1)
     mat = xx + xx[:, None] - 2.0 * xp.dot(x, x.T)
+    xp.maximum(mat, 0, out=mat)
     if add_epsilon:
         mat += 1e-40
     # ensure the diagonal components are zero
