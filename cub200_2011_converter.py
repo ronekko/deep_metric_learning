@@ -44,34 +44,32 @@ if __name__ == '__main__':
 
     fuel_root_path = fuel.config.config["data_path"]["yaml"]
     fuel_data_path = os.path.join(fuel_root_path, dataset_name)
-    image_filepath = os.path.join(fuel_data_path, archive_basename + ".tgz")
-#    label_filepath = os.path.join(fuel_data_path, "cars_annos.mat")
+    extracted_dir_path = os.path.join(fuel_data_path, archive_basename)
+    archive_filepath = extracted_dir_path + ".tgz"
+    images_dir_path = os.path.join(extracted_dir_path, "images")
+    label_filepath = os.path.join(extracted_dir_path, "image_class_labels.txt")
+    image_list_filepath = os.path.join(extracted_dir_path, "images.txt")
 
-    # Extract car_ims.tgz if car_ims directory does not exist
-    with tarfile.open(image_filepath, "r") as tf:
-        jpg_filenames = [fn for fn in tf.getnames() if fn.endswith(".jpg")]
-    # exclude files whose name starts with "._" or ends with "xxx.jpg"
-    jpg_filenames = [fn for fn in jpg_filenames
-                     if not (fn.split("/")[-1].startswith("._") or
-                             fn.split("_")[-1].startswith("xxx"))]
-    jpg_filenames.sort(key=lambda fn: extract_class_label(fn))
-    num_examples = len(jpg_filenames)  # ????
+    # Extract CUB_200_2011.tgz if CUB_200_2011 directory does not exist
     if not os.path.exists(os.path.join(fuel_data_path, archive_basename)):
-        subprocess.call(["tar", "zxvf", image_filepath.replace("\\", "/"),
+        subprocess.call(["tar", "zxvf", archive_filepath.replace("\\", "/"),
                          "-C", fuel_data_path.replace("\\", "/"),
                          "--force-local"])
 
-    # Extract class labels
-    cars_annos = loadmat(label_filepath)
-    annotations = cars_annos["annotations"].ravel()
-    annotations = sorted(annotations, key=lambda a: str(a[0][0]))
-    class_labels = []
-    for annotation in annotations:
-        class_label = int(annotation[5])
-        class_labels.append(class_label)
+    id_name_pairs = np.loadtxt(image_list_filepath, np.str)
+    assert np.array_equal(
+        [int(i) for i in id_name_pairs[:, 0].tolist()], range(1, 11789))
+    id_label_pairs = np.loadtxt(label_filepath, np.str)
+    assert np.array_equal(
+        [int(i) for i in id_label_pairs[:, 0].tolist()], range(1, 11789))
+    jpg_filenames = id_name_pairs[:, 1].tolist()
+    class_labels = [int(i) for i in id_label_pairs[:, 1].tolist()]
+    num_examples = len(jpg_filenames)
+    num_clases = 200
+    assert np.array_equal(np.unique(class_labels), range(1, num_clases + 1))
 
     # open hdf5 file
-    hdf5_filename = "cars196.hdf5"
+    hdf5_filename = dataset_name + ".hdf5"
     hdf5_filepath = os.path.join(fuel_data_path, hdf5_filename)
     hdf5 = h5py.File(hdf5_filepath, mode="w")
 
@@ -87,7 +85,7 @@ if __name__ == '__main__':
     # write images to the disk
     for i, filename in tqdm(enumerate(jpg_filenames), total=num_examples,
                             desc=hdf5_filepath):
-        raw_image = cv2.imread(os.path.join(fuel_data_path, filename),
+        raw_image = cv2.imread(os.path.join(images_dir_path, filename),
                                cv2.IMREAD_COLOR)  # BGR image
         image = preprocess(raw_image, image_size)
         ds_images[i] = image
@@ -98,8 +96,8 @@ if __name__ == '__main__':
     ds_targets.dims[0].label = "batch"
     ds_targets.dims[1].label = "class_labels"
 
-    # specify the splits (labels 1~98 for train, 99~196 for test)
-    test_head = class_labels.index(98)
+    # specify the splits (labels 1~100 for train, 101~200 for test)
+    test_head = class_labels.index(101)
     split_train, split_test = (0, test_head), (test_head, num_examples)
     split_dict = dict(train=dict(images=split_train, targets=split_train),
                       test=dict(images=split_test, targets=split_test))
