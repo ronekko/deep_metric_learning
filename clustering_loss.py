@@ -84,6 +84,12 @@ def clustering_loss(x, t, gamma, T=5):
         s.append(i_best)
         v.remove(i_best)
 
+        # In order to speed-up by making skip to calculate NMI more frequently,
+        # sort v in descending order by distances to their nearest medoid
+        D_min = D[s].min(0)  # distance to the nearest medoid for each point
+        sorted_order = np.argsort(D_min[v])[::-1]
+        v = np.array(v)[sorted_order].tolist()
+
     # Refine S_PAM by Algorithm 2
     a_previous = a_best
     for t in range(T):
