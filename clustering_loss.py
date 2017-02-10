@@ -7,14 +7,14 @@ Created on Tue Jan 31 15:19:20 2017
 
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import normalized_mutual_info_score
+#from sklearn.metrics import normalized_mutual_info_score
 import contexttimer
 
 import chainer
 import chainer.functions as F
 
 from get_item_mod import get_item
+from common import normalized_mutual_info_score
 
 
 def distance_matrix(x, add_epsilon=True):
