@@ -7,14 +7,14 @@ Created on Tue Jan 31 15:19:20 2017
 
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import normalized_mutual_info_score
+#from sklearn.metrics import normalized_mutual_info_score
 import contexttimer
 
 import chainer
 import chainer.functions as F
 
 from get_item_mod import get_item
+from common import normalized_mutual_info_score
 
 
 def distance_matrix(x, add_epsilon=True):
@@ -83,6 +83,12 @@ def clustering_loss(x, t, gamma, T=5):
 
         s.append(i_best)
         v.remove(i_best)
+
+        # In order to speed-up by making skip to calculate NMI more frequently,
+        # sort v in descending order by distances to their nearest medoid
+        D_min = D[s].min(0)  # distance to the nearest medoid for each point
+        sorted_order = np.argsort(D_min[v])[::-1]
+        v = np.array(v)[sorted_order].tolist()
 
     # Refine S_PAM by Algorithm 2
     a_previous = a_best
