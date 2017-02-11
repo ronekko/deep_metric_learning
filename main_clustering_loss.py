@@ -47,7 +47,7 @@ if __name__ == '__main__':
     p.learning_rate = 0.0001  # 0.0001 is good
     p.batch_size = 120
     p.out_dim = 64
-    p.gamma_init = 10
+    p.gamma_init = 10.0
     p.gamma_decay = 0.94
     p.normalize_output = True
     p.l2_weight_decay = 0  # 0.001
@@ -86,7 +86,6 @@ if __name__ == '__main__':
                 batch = next(iter_train)
                 x_data, c_data = concat_examples(batch, device)
                 y = model(x_data, train=True)
-                y_a, y_p = F.split_axis(y, 2, axis=0)
 
                 loss = clustering_loss(y, c_data, gamma)
                 optimizer.zero_grads()
