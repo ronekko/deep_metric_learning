@@ -11,7 +11,7 @@ from chainer.testing import attr
 from chainer.testing import parameterize
 from chainer.utils import type_check
 
-import get_item_mod as functions
+from .. import get_item_mod as functions
 
 
 @parameterize(
