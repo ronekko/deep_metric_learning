@@ -13,7 +13,6 @@ import chainer.links as L
 import chainer.optimizers
 from chainer.dataset.convert import concat_examples
 
-import chainer_datasets
 import googlenet
 
 
@@ -149,22 +148,3 @@ class SimpleConvnet(chainer.Chain):
         h = F.relu(h)
         h = self.linear2(h)
         return h
-
-
-if __name__ == '__main__':
-    batch_size = 60
-
-    # load database
-    iters = chainer_datasets.get_iterators(batch_size)
-    iter_train, iter_train_eval, iter_test = iters
-
-    # load model
-    model = ModifiedGoogLeNet().to_gpu()
-    optimizer = chainer.optimizers.Adam()
-    optimizer.setup(model)
-
-    x, c = concat_examples(next(iter_train), device=0)
-    y = model(x, train=True)
-    loss = sum(sum(y))
-    optimizer.zero_grads()
-    loss.backward()
