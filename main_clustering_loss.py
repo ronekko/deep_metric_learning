@@ -110,24 +110,6 @@ if __name__ == '__main__':
             epoch_time = time_end - time_begin
             total_time = time_end - time_origin
 
-            print "#", epoch
-            print "time: {} ({})".format(epoch_time, total_time)
-            print "[train] loss:", loss_average
-            print "[train] soft:", soft
-            print "[train] hard:", hard
-            print "[train] retr:", retrieval
-            print "[test]  soft:", soft_test
-            print "[test]  hard:", hard_test
-            print "[test]  retr:", retrieval_test
-            print ("lr:{}, bs:{}, out_dim:{}, l2_wd:{}, gamma:{}, "
-                   "gamma_init:{}, gamma_decay:{}, normalize_output:{}, "
-                   "evanluation:{}").format(
-                        p.learning_rate, p.batch_size, p.out_dim,
-                        p.l2_weight_decay, gamma, p.gamma_init, p.gamma_decay,
-                        p.normalize_output, p.distance_type)
-            # print norms of the weights
-            print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
-            print
             logger.epoch = epoch
             logger.total_time = total_time
             logger.loss_log.append(loss_average)
@@ -148,6 +130,22 @@ if __name__ == '__main__':
                 logger.hard_test_best = hard_test
                 logger.retrieval_best = retrieval
                 logger.retrieval_test_best = retrieval_test
+
+            print "#", epoch
+            print "time: {} ({})".format(epoch_time, total_time)
+            print "[train] loss:", loss_average
+            print "[train] soft:", soft
+            print "[train] hard:", hard
+            print "[train] retr:", retrieval
+            print "[test]  soft:", soft_test
+            print "[test]  hard:", hard_test
+            print "[test]  retr:", retrieval_test
+            print "[best]  soft: {} (at # {})".format(logger.soft_test_best,
+                                                      logger.epoch_best)
+            print p
+            # print norms of the weights
+            print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
+            print
 
             # Draw plots
             plt.figure(figsize=(8, 4))
@@ -191,3 +189,10 @@ if __name__ == '__main__':
 
     logger.save(dir_name)
     p.save(dir_name)
+
+    print "total epochs: {} ({} [s])".format(logger.epoch, logger.total_time)
+    print "best test score (at # {})".format(logger.epoch_best)
+    print "[test]  soft:", logger.soft_test_best
+    print "[test]  hard:", logger.hard_test_best
+    print "[test]  retr:", logger.retrieval_test_best
+    print p
