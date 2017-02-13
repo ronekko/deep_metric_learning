@@ -21,7 +21,7 @@ import colorama
 
 from clustering_loss import clustering_loss
 import common
-from datasets import chainer_datasets
+from datasets import dataset_loader
 from models import ModifiedGoogLeNet
 
 colorama.init()
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     ##########################################################
     # load database
     ##########################################################
-    iters = chainer_datasets.get_iterators(p.batch_size, 'clustering')
+    iters = dataset_loader.get_iterators(p.batch_size, 'clustering')
     iter_train, iter_train_eval, iter_test = iters
 
     ##########################################################

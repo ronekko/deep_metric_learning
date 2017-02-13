@@ -21,7 +21,7 @@ import colorama
 
 from n_pair_mc_loss import n_pair_mc_loss
 import common
-from datasets import chainer_datasets
+from datasets import dataset_loader
 from models import ModifiedGoogLeNet
 
 colorama.init()
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     ##########################################################
     # load database
     ##########################################################
-    iters = chainer_datasets.get_iterators(p.batch_size)
+    iters = dataset_loader.get_iterators(p.batch_size)
     iter_train, iter_train_eval, iter_test = iters
 
     ##########################################################
