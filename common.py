@@ -163,6 +163,10 @@ class Logger(defaultdict):
     def __setattr__(self, key, value):
         self[key] = value
 
+    def __str__(self):
+        keys = filter(lambda key: not key.startswith('_'), self)
+        return ", ".join(["{}:{}".format(key, self[key]) for key in keys])
+
     def save(self, dir_name):
         dir_path = os.path.join(self._root_dir_path, dir_name)
         if not os.path.exists(dir_path):
