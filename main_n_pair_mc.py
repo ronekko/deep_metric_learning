@@ -21,7 +21,7 @@ import colorama
 
 from n_pair_mc_loss import n_pair_mc_loss
 import common
-import chainer_datasets
+from datasets import chainer_datasets
 from models import ModifiedGoogLeNet
 
 colorama.init()

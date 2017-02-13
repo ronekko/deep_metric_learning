@@ -21,7 +21,7 @@ import colorama
 
 from clustering_loss import clustering_loss
 import common
-import chainer_datasets
+from datasets import chainer_datasets
 from models import ModifiedGoogLeNet
 
 colorama.init()
