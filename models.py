@@ -11,7 +11,6 @@ import chainer
 import chainer.functions as F
 import chainer.links as L
 import chainer.optimizers
-from chainer.dataset.convert import concat_examples
 
 import googlenet
 

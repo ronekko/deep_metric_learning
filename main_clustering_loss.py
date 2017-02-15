@@ -13,7 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import chainer
-import chainer.functions as F
 from chainer import optimizers
 from chainer.dataset.convert import concat_examples
 from tqdm import tqdm
@@ -25,7 +24,6 @@ from datasets import dataset_loader
 from models import ModifiedGoogLeNet
 
 colorama.init()
-#chainer.set_debug(True)
 
 
 def worker_load_data(queue, stream):
