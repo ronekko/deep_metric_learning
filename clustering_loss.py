@@ -7,7 +7,6 @@ Created on Tue Jan 31 15:19:20 2017
 
 import copy
 import numpy as np
-#from sklearn.metrics import normalized_mutual_info_score
 import contexttimer
 
 import chainer

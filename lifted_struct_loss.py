@@ -9,8 +9,6 @@ import numpy as np
 import chainer.functions as F
 
 from get_item_mod import get_item
-#from get_item_mod import install_variable_get_item
-#install_variable_get_item()
 
 
 def squared_distance_matrix(X):
@@ -93,7 +91,6 @@ if __name__ == '__main__':
 
     loss_gpu = lifted_struct_loss(f_a_gpu, f_p_gpu, alpha)
     loss_gpu.backward()
-
 
     assert np.allclose(f_a_cpu.grad, f_a_gpu.grad.get())
     assert np.allclose(f_p_cpu.grad, f_p_gpu.grad.get(), rtol=1e-3)
