@@ -52,11 +52,12 @@ if __name__ == '__main__':
     p.num_epochs = 40
     p.num_batches_per_epoch = 500
     p.distance_type = 'euclidean'  # 'euclidean' or 'cosine'
+    p.dataset = 'cars196'  # 'cars196' or 'cub200_2011' or 'products'
 
     ##########################################################
     # load database
     ##########################################################
-    iters = dataset_loader.get_iterators(p.batch_size)
+    iters = dataset_loader.get_iterators(p.batch_size, dataset=p.dataset)
     iter_train, iter_train_eval, iter_test = iters
 
     ##########################################################
