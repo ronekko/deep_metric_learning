@@ -89,15 +89,15 @@ def make_epoch_iterator(x, labels, batch_size, multiprocess=False):
     return make_simple_iterator(x, labels, batch_size, multiprocess)
 
 
-def get_iterators(batch_size=50, method='n_pairs_mc', dataset='cars196'):
+def get_iterators(batch_size=50, dataset='cars196', method='n_pairs_mc'):
     '''
     args:
        batch_size (int):
            number of examples per batch
-       method (str):
-           batch construction method. Select from 'n_pairs_mc', 'clustering'.
        dataset (str):
            specify the dataset from 'cars196', 'cub200_2011', 'products'.
+       method (str):
+           batch construction method. Select from 'n_pairs_mc', 'clustering'.
     '''
 
     if dataset == 'cars196':
