@@ -11,6 +11,8 @@ import numpy as np
 from chainer.dataset import DatasetMixin
 
 import cars196_dataset
+import cub200_2011_dataset
+import online_products_dataset
 from my_iterators import SerialIterator, MultiprocessIterator
 from indexes_samplers import NPairMCIndexesSampler
 
@@ -87,16 +89,28 @@ def make_epoch_iterator(x, labels, batch_size, multiprocess=False):
     return make_simple_iterator(x, labels, batch_size, multiprocess)
 
 
-def get_iterators(batch_size=50, method='n_pairs_mc'):
+def get_iterators(batch_size=50, method='n_pairs_mc', dataset='cars196'):
     '''
     args:
        batch_size (int):
            number of examples per batch
        method (str):
            batch construction method. Select from 'n_pairs_mc', 'clustering'.
+       dataset (str):
+           specify the dataset from 'cars196', 'cub200_2011', 'products'.
     '''
 
-    train, test = cars196_dataset.load_as_ndarray(['train', 'test'])
+    if dataset == 'cars196':
+        dataset_module = cars196_dataset
+    elif dataset == 'cub200_2011':
+        dataset_module = cub200_2011_dataset
+    elif dataset == 'products':
+        dataset_module = online_products_dataset
+    else:
+        raise ValueError(
+            "`dataset` must be 'cars196', 'cub200_2011' or 'products'.")
+
+    train, test = dataset_module.load_as_ndarray(['train', 'test'])
     if method == 'n_pairs_mc':
         iter_train = make_n_pairs_mc_iterator(train[0], train[1], batch_size)
     elif method == 'clustering':
