@@ -24,6 +24,10 @@ class Cub200_2011Dataset(H5PYDataset):
             raise IOError(msg)
         super(Cub200_2011Dataset, self).__init__(
             file_or_path=path, which_sets=which_sets, **kwargs)
+        self._state = self.open()
+
+    def __getitem__(self, index):
+        return self.get_data(request=index)
 
 
 def load_as_ndarray(which_sets=['train', 'test']):
