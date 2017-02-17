@@ -16,9 +16,14 @@ class Cub200_2011Dataset(H5PYDataset):
     _filename = 'cub200_2011/cub200_2011.hdf5'
 
     def __init__(self, which_sets, **kwargs):
+        try:
+            path = find_in_data_path(self._filename)
+        except IOError as e:
+            msg = str(e) + (""".
+         You need to download the dataset and convert it to hdf5 before.""")
+            raise IOError(msg)
         super(Cub200_2011Dataset, self).__init__(
-            file_or_path=find_in_data_path(self._filename),
-            which_sets=which_sets, **kwargs)
+            file_or_path=path, which_sets=which_sets, **kwargs)
 
 
 def load_as_ndarray(which_sets=['train', 'test']):
