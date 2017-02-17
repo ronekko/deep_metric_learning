@@ -42,7 +42,7 @@ if __name__ == '__main__':
     dataset_name = "cub200_2011"
     archive_basename = "CUB_200_2011"
 
-    fuel_root_path = fuel.config.config["data_path"]["yaml"]
+    fuel_root_path = os.path.normpath(fuel.config.config["data_path"]["yaml"])
     fuel_data_path = os.path.join(fuel_root_path, dataset_name)
     extracted_dir_path = os.path.join(fuel_data_path, archive_basename)
     archive_filepath = extracted_dir_path + ".tgz"

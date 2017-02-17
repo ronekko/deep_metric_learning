@@ -28,7 +28,7 @@ if __name__ == '__main__':
     dataset_name = "cars196"
     archive_basename = "car_ims"
 
-    fuel_root_path = fuel.config.config["data_path"]["yaml"]
+    fuel_root_path = os.path.normpath(fuel.config.config["data_path"]["yaml"])
     fuel_data_path = os.path.join(fuel_root_path, dataset_name)
     image_filepath = os.path.join(fuel_data_path, archive_basename + ".tgz")
     label_filepath = os.path.join(fuel_data_path, "cars_annos.mat")
