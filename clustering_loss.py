@@ -10,6 +10,7 @@ import numpy as np
 import contexttimer
 
 import chainer
+from chainer import cuda
 import chainer.functions as F
 
 from get_item_mod import get_item
@@ -52,7 +53,6 @@ def clustering_loss(x, t, gamma, T=5):
         t = chainer.Variable(t)
     t_cpu = chainer.cuda.to_cpu(t.data).ravel()
 
-    xp = chainer.cuda.get_array_module(x.data)
     batch_size = len(t.data)
     num_classes = len(np.unique(t_cpu))
 
@@ -63,8 +63,7 @@ def clustering_loss(x, t, gamma, T=5):
     # Note that this computation is done outside the computational graph.
     # Find an initial medoids of S_PAM by Algorithm 1 in the paper.
     D = distance_matrix(x.data)
-    if xp is chainer.cuda.cupy:
-        D = D.get()
+    D = cuda.to_cpu(D)
     for _ in range(num_classes):
         # find an element in v which maximise a_function
         a_best = -np.inf
