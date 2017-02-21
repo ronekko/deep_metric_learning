@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import chainer
+from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
 from chainer.dataset.convert import concat_examples
@@ -63,8 +64,10 @@ if __name__ == '__main__':
     ##########################################################
     # construct the model
     ##########################################################
-    model = ModifiedGoogLeNet(p.out_dim).to_gpu()
-    model = model.to_gpu()
+    model = ModifiedGoogLeNet(p.out_dim)
+    if device >= 0:
+        model.to_gpu()
+    xp = model.xp
     optimizer = optimizers.RMSprop(p.learning_rate)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
@@ -90,11 +93,11 @@ if __name__ == '__main__':
                 loss.backward()
                 optimizer.update()
 
-                loss_data = loss.data.get()
-                epoch_losses.append(loss_data)
+                epoch_losses.append(loss.data)
                 y = y_a = y_p = loss = None
 
-            loss_average = np.mean(epoch_losses)
+            loss_average = cuda.to_cpu(xp.array(
+                xp.hstack(epoch_losses).mean()))
 
             # average accuracy and distance matrix for training data
             D, soft, hard, retrieval = common.evaluate(
@@ -142,7 +145,9 @@ if __name__ == '__main__':
                                                       logger.epoch_best)
             print p
             # print norms of the weights
-            print "|W|", [np.linalg.norm(w.data.get()) for w in model.params()]
+            params = xp.hstack([xp.linalg.norm(param.data)
+                                for param in model.params()]).tolist()
+            print "|W|", map(lambda param: float('%0.2f' % param), params)
             print
 
             # Draw plots
