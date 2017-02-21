@@ -13,30 +13,31 @@ import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
 
 import chainer
+from chainer import cuda
 from chainer import Variable
 from chainer import Optimizer
 from chainer import Chain, ChainList
 from chainer.serializers import save_npz
 from chainer.dataset.convert import concat_examples
-import cupy
 
 
 def iterate_forward(model, epoch_iterator, train=False, normalize=False):
+    xp = model.xp
     y_batches = []
     c_batches = []
     for batch in copy.copy(epoch_iterator):
         x_batch_data, c_batch_data = concat_examples(batch)
-        x_batch = Variable(cupy.asarray(x_batch_data), volatile=not train)
+        x_batch = Variable(xp.asarray(x_batch_data), volatile=not train)
         y_batch = model(x_batch, train=train)
         if normalize:
-            y_batch_data = y_batch.data / cupy.linalg.norm(
+            y_batch_data = y_batch.data / xp.linalg.norm(
                 y_batch.data, axis=1, keepdims=True)
         else:
             y_batch_data = y_batch.data
         y_batches.append(y_batch_data)
         y_batch = None
         c_batches.append(c_batch_data)
-    y_data = cupy.concatenate(y_batches).get()
+    y_data = cuda.to_cpu(xp.concatenate(y_batches))
     c_data = np.concatenate(c_batches)
     return y_data, c_data
 
