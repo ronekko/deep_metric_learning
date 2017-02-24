@@ -140,11 +140,8 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
 
         # flip horizontally with a probability of 0.5
         if self.random_lr_flip:
-            b = random.randint(0, 1)
-            print b
-            if b:
-                print 'flip!'
-                example = example[:, ::-1, ::-1]
+            if random.randint(0, 1):
+                example = example[:, :, ::-1]
 
         if self.devide_by_255:
             example = example.astype(numpy.float32) / 255.0
