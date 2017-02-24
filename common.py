@@ -18,7 +18,6 @@ from chainer import Variable
 from chainer import Optimizer
 from chainer import Chain, ChainList
 from chainer.serializers import save_npz
-from chainer.dataset.convert import concat_examples
 
 
 def iterate_forward(model, epoch_iterator, train=False, normalize=False):
@@ -26,7 +25,7 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
     y_batches = []
     c_batches = []
     for batch in copy.copy(epoch_iterator):
-        x_batch_data, c_batch_data = concat_examples(batch)
+        x_batch_data, c_batch_data = batch
         x_batch = Variable(xp.asarray(x_batch_data), volatile=not train)
         y_batch = model(x_batch, train=train)
         if normalize:

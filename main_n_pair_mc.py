@@ -16,13 +16,12 @@ import chainer
 from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
-from chainer.dataset.convert import concat_examples
 from tqdm import tqdm
 import colorama
 
 from n_pair_mc_loss import n_pair_mc_loss
 import common
-from datasets import dataset_loader
+from datasets import data_provider
 from models import ModifiedGoogLeNet
 
 colorama.init()
@@ -58,8 +57,9 @@ if __name__ == '__main__':
     ##########################################################
     # load database
     ##########################################################
-    iters = dataset_loader.get_iterators(p.batch_size, dataset=p.dataset)
-    iter_train, iter_train_eval, iter_test = iters
+    streams = data_provider.get_streams(p.batch_size, dataset=p.dataset)
+    stream_train, stream_train_eval, stream_test = streams
+    iter_train = stream_train.get_epoch_iterator()
 
     ##########################################################
     # construct the model
@@ -83,8 +83,10 @@ if __name__ == '__main__':
             for i in tqdm(range(p.num_batches_per_epoch)):
                 # the first half　of a batch are the anchors and the latters
                 # are the positive examples corresponding to each anchor
-                batch = next(iter_train)
-                x_data, c_data = concat_examples(batch, device)
+                x_data, c_data = next(iter_train)
+                if device >= 0:
+                    x_data = cuda.to_gpu(x_data, device)
+                    c_data = cuda.to_gpu(c_data, device)
                 y = model(x_data, train=True)
                 y_a, y_p = F.split_axis(y, 2, axis=0)
 
@@ -101,11 +103,11 @@ if __name__ == '__main__':
 
             # average accuracy and distance matrix for training data
             D, soft, hard, retrieval = common.evaluate(
-                model, iter_train_eval, p.distance_type)
+                model, stream_train_eval.get_epoch_iterator(), p.distance_type)
 
             # average accuracy and distance matrix for testing data
             D_test, soft_test, hard_test, retrieval_test = common.evaluate(
-                model, iter_test, p.distance_type)
+                model, stream_test.get_epoch_iterator(), p.distance_type)
 
             time_end = time.time()
             epoch_time = time_end - time_begin
