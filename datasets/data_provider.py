@@ -97,6 +97,51 @@ class NPairLossScheme(BatchSizeScheme):
         return self
 
 
+class EpochwiseShuffledInfiniteScheme(BatchSizeScheme):
+    def __init__(self, indexes, batch_size):
+        if isinstance(indexes, int):
+            indexes = range(indexes)
+        if batch_size > len(indexes):
+            raise ValueError('batch_size must not be larger than the indexes.')
+        if len(indexes) != len(np.unique(indexes)):
+            raise ValueError('Items in indexes must be unique.')
+        self._original_indexes = np.array(indexes, dtype=np.int).flatten()
+        self.batch_size = batch_size
+        self._shuffled_indexes = np.array([], dtype=np.int)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        batch_size = self.batch_size
+
+        # if remaining indexes are shorter than batch_size then new shuffled
+        # indexes are appended to the remains.
+        num_remains = len(self._shuffled_indexes)
+        if num_remains < batch_size:
+            num_overrun = batch_size - num_remains
+            new_shuffled_indexes = self._original_indexes.copy()
+
+            # ensure the batch of indexes from the joint part does not contain
+            # duplicate index.
+            np.random.shuffle(new_shuffled_indexes)
+            overrun = new_shuffled_indexes[:num_overrun]
+            next_indexes = np.concatenate((self._shuffled_indexes, overrun))
+            while len(next_indexes) != len(np.unique(next_indexes)):
+                np.random.shuffle(new_shuffled_indexes)
+                overrun = new_shuffled_indexes[:num_overrun]
+                next_indexes = np.concatenate(
+                    (self._shuffled_indexes, overrun))
+            self._shuffled_indexes = np.concatenate(
+                (self._shuffled_indexes, new_shuffled_indexes))
+        next_indexes = self._shuffled_indexes[:batch_size]
+        self._shuffled_indexes = self._shuffled_indexes[batch_size:]
+        return next_indexes
+
+    def get_request_iterator(self):
+        return self
+
+
 def make_random_cropped_stream(dataset, batch_size, crop_size):
     tmp_stream = DataStream(dataset)
     labels = [tmp_stream.get_data([i])[1] for i in range(dataset.num_examples)]
