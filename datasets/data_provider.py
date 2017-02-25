@@ -11,8 +11,8 @@ from fuel.streams import DataStream
 from fuel.schemes import BatchSizeScheme, SequentialScheme
 
 from cars196_dataset import Cars196Dataset
-from datasets.cub200_2011_dataset import Cub200_2011Dataset
-from datasets.online_products_dataset import OnlineProductsDataset
+from cub200_2011_dataset import Cub200_2011Dataset
+from online_products_dataset import OnlineProductsDataset
 from random_fixed_size_crop_mod import RandomFixedSizeCrop
 
 
