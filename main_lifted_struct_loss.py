@@ -27,13 +27,6 @@ from models import ModifiedGoogLeNet
 colorama.init()
 
 
-def worker_load_data(queue, stream):
-    infinite_iterator = stream.get_epoch_iterator()
-    while True:
-        x_data, c_data = next(infinite_iterator)
-        queue.put((x_data, c_data))
-
-
 if __name__ == '__main__':
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
