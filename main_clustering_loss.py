@@ -183,7 +183,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
-    dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%H%S"),
+    dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%M%S"),
                          str(logger.soft_test_best[0])])
 
     logger.save(dir_name)
