@@ -167,6 +167,8 @@ if __name__ == '__main__':
             plt.legend(["tr-soft", "tr-hard", "tr-retr",
                         "te-soft", "te-hard", "te-retr"],
                        bbox_to_anchor=(1.4, 1))
+            plt.ylim([0.0, 1.0])
+            plt.xlim([0, p.num_epochs])
             plt.tight_layout()
             plt.show()
             plt.draw()
