@@ -8,7 +8,7 @@ Created on Tue Jan 10 00:15:50 2017
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from fuel.streams import DataStream
-from fuel.schemes import BatchSizeScheme, SequentialScheme
+from fuel.schemes import IterationScheme, BatchSizeScheme, SequentialScheme
 
 from cars196_dataset import Cars196Dataset
 from cub200_2011_dataset import Cub200_2011Dataset
@@ -48,8 +48,11 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
     elif method == 'clustering':
         scheme = EpochwiseShuffledInfiniteScheme(
             dataset_train.num_examples, batch_size)
+    elif isinstance(method, IterationScheme):
+        scheme = method
     else:
-        raise ValueError("`method` must be 'n_pairs_mc' or 'clustering'.")
+        raise ValueError("`method` must be 'n_pairs_mc' or 'clustering' "
+                         "or an instance of subclass of IterationScheme.")
     stream = DataStream(dataset_train, iteration_scheme=scheme)
     stream_train = RandomFixedSizeCrop(stream, which_sources=('images',),
                                        random_lr_flip=True)
