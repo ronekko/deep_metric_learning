@@ -48,11 +48,11 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
     elif method == 'clustering':
         scheme = EpochwiseShuffledInfiniteScheme(
             dataset_train.num_examples, batch_size)
-    elif isinstance(method, IterationScheme):
-        scheme = method
+    elif issubclass(method, IterationScheme):
+        scheme = method(batch_size, dataset=dataset_train)
     else:
         raise ValueError("`method` must be 'n_pairs_mc' or 'clustering' "
-                         "or an instance of subclass of IterationScheme.")
+                         "or subclass of IterationScheme.")
     stream = DataStream(dataset_train, iteration_scheme=scheme)
     stream_train = RandomFixedSizeCrop(stream, which_sources=('images',),
                                        random_lr_flip=True)
