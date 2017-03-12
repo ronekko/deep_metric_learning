@@ -5,6 +5,7 @@ Created on Tue Jan 10 00:15:50 2017
 @author: sakurai
 """
 
+import collections
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from fuel.streams import DataStream
@@ -111,7 +112,7 @@ class NPairLossScheme(BatchSizeScheme):
 
 class EpochwiseShuffledInfiniteScheme(BatchSizeScheme):
     def __init__(self, indexes, batch_size):
-        if isinstance(indexes, int):
+        if not isinstance(indexes, collections.Iterable):
             indexes = range(indexes)
         if batch_size > len(indexes):
             raise ValueError('batch_size must not be larger than the indexes.')
@@ -148,7 +149,7 @@ class EpochwiseShuffledInfiniteScheme(BatchSizeScheme):
                 (self._shuffled_indexes, new_shuffled_indexes))
         next_indexes = self._shuffled_indexes[:batch_size]
         self._shuffled_indexes = self._shuffled_indexes[batch_size:]
-        return next_indexes
+        return next_indexes.tolist()
 
     def get_request_iterator(self):
         return self
