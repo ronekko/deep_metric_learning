@@ -18,16 +18,18 @@ import chainer.functions as F
 from chainer import optimizers
 from tqdm import tqdm
 import colorama
+from sklearn.model_selection import ParameterSampler
 
 from lifted_struct_loss import lifted_struct_loss
 import common
 from datasets import data_provider
 from models import ModifiedGoogLeNet
+from common import LogUniformDistribution
 
 colorama.init()
 
 
-if __name__ == '__main__':
+def main(param_dict):
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
     xp = chainer.cuda.cupy
@@ -35,17 +37,7 @@ if __name__ == '__main__':
     config_parser.read('config')
     log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
 
-    p = common.Logger(log_dir_path)  # hyperparameters
-    p.learning_rate = 0.0001  # 0.0001 is good
-    p.batch_size = 120
-    p.out_dim = 64
-    p.alpha = 1.0
-    p.l2_weight_decay = 0.001
-    p.crop_size = 224
-    p.num_epochs = 40
-    p.num_batches_per_epoch = 500
-    p.distance_type = 'euclidean'  # 'euclidean' or 'cosine'
-    p.dataset = 'cars196'  # 'cars196' or 'cub200_2011' or 'products'
+    p = common.Logger(log_dir_path, **param_dict)  # hyperparameters
 
     ##########################################################
     # load database
@@ -57,11 +49,16 @@ if __name__ == '__main__':
     ##########################################################
     # construct the model
     ##########################################################
-    model = ModifiedGoogLeNet(p.out_dim)
+    model = ModifiedGoogLeNet(p.out_dim, p.normalize_output)
     if device >= 0:
         model.to_gpu()
     xp = model.xp
-    optimizer = optimizers.RMSprop(p.learning_rate)
+    if p.optimizer == 'Adam':
+        optimizer = optimizers.Adam(p.learning_rate)
+    elif p.optimizer == 'RMSProp':
+        optimizer = optimizers.RMSprop(p.learning_rate)
+    else:
+        raise ValueError
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
 
@@ -174,8 +171,6 @@ if __name__ == '__main__':
             plt.draw()
 
             loss = None
-            accuracy = None
-            accuracy_test = None
             D = None
             D_test = None
 
@@ -194,3 +189,37 @@ if __name__ == '__main__':
     print "[test]  hard:", logger.hard_test_best
     print "[test]  retr:", logger.retrieval_test_best
     print p
+    print
+
+
+if __name__ == '__main__':
+    random_state = None
+    num_runs = 100
+    param_distributions = dict(
+        learning_rate=LogUniformDistribution(low=1e-4, high=1e-4),
+#        l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-3),
+#        optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
+    )
+    static_params = dict(
+        num_epochs=40,
+        num_batches_per_epoch=500,
+        batch_size=120,
+        out_dim=64,
+#        learning_rate=0.0001,
+        alpha=1.0,  # penalty for the norm of the output vector
+        crop_size=224,
+        normalize_output=False,
+        l2_weight_decay=0.001,  # non-negative constant
+        optimizer='RMSProp',  # 'Adam' or 'RMSPeop'
+        distance_type='euclidean',  # 'euclidean' or 'cosine'
+        dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
+    )
+
+    sampler = ParameterSampler(param_distributions, num_runs, random_state)
+
+    for random_params in sampler:
+        params = {}
+        params.update(random_params)
+        params.update(static_params)
+
+        main(params)

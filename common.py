@@ -231,3 +231,14 @@ def entropy(p):
     xp = chainer.cuda.get_array_module(p)
     p = p[p > 0]
     return xp.sum(p * xp.log(p))
+
+
+class LogUniformDistribution(object):
+    def __init__(self, low, high):
+        assert low <= high
+        self.low = low
+        self.high = high
+
+    def rvs(self, size=None, random_state=None):
+        uniform = random_state.uniform if random_state else np.random.uniform
+        return np.exp(uniform(np.log(self.low), np.log(self.high), size))
