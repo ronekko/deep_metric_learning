@@ -76,7 +76,7 @@ if __name__ == '__main__':
             epoch_losses = []
 
             for i in tqdm(range(p.num_batches_per_epoch)):
-                # the first half　of a batch are the anchors and the latters
+                # the first half of a batch are the anchors and the latters
                 # are the positive examples corresponding to each anchor
                 x_data, c_data = next(iter_train)
                 if device >= 0:
