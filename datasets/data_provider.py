@@ -25,8 +25,10 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
            number of examples per batch
        dataset (str):
            specify the dataset from 'cars196', 'cub200_2011', 'products'.
-       method (str):
-           batch construction method. Select from 'n_pairs_mc', 'clustering'.
+       method (str or fuel.schemes.IterationScheme):
+           batch construction method. Specify 'n_pairs_mc', 'clustering', or
+           a subclass of IterationScheme that has constructor such as
+           `__init__(self, batch_size, dataset_train)` .
     '''
 
     if dataset == 'cars196':
