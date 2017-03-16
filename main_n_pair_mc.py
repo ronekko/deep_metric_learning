@@ -24,6 +24,7 @@ from n_pair_mc_loss import n_pair_mc_loss
 import common
 from datasets import data_provider
 from models import ModifiedGoogLeNet
+from common import LogUniformDistribution
 
 colorama.init()
 
@@ -189,17 +190,6 @@ def main(param_dict):
     print "[test]  retr:", logger.retrieval_test_best
     print p
     print
-
-
-class LogUniformDistribution():
-    def __init__(self, low, high):
-        assert low <= high
-        self.low = low
-        self.high = high
-
-    def rvs(self, size=None, random_state=None):
-        uniform = random_state.uniform if random_state else np.random.uniform
-        return np.exp(uniform(np.log(self.low), np.log(self.high), size))
 
 
 if __name__ == '__main__':
