@@ -20,23 +20,43 @@ class TestGoogLeNet(unittest.TestCase):
     def test_available_layers(self):
         result = self.link.available_layers
         self.assertIsInstance(result, list)
-        self.assertEqual(len(result), 19)
+        self.assertEqual(len(result), 21)
 
-    def check_call(self):
+    def check_call_prob(self):
         xp = self.link.xp
 
-        x1 = Variable(xp.asarray(numpy.random.uniform(
+        x = Variable(xp.asarray(numpy.random.uniform(
             -1, 1, (1, 3, 224, 224)).astype(numpy.float32)))
-        y1 = cuda.to_cpu(self.link(x1)['prob'].data)
-        self.assertEqual(y1.shape, (1, 1000))
+        y = cuda.to_cpu(self.link(x)['prob'].data)
+        self.assertEqual(y.shape, (1, 1000))
+
+    def check_call_loss1_fc2(self):
+        xp = self.link.xp
+
+        x = Variable(xp.asarray(numpy.random.uniform(
+            -1, 1, (1, 3, 224, 224)).astype(numpy.float32)))
+        y = cuda.to_cpu(self.link(x, ['loss1_fc2'])['loss1_fc2'].data)
+        self.assertEqual(y.shape, (1, 1000))
+
+    def check_call_loss2_fc2(self):
+        xp = self.link.xp
+
+        x = Variable(xp.asarray(numpy.random.uniform(
+            -1, 1, (1, 3, 224, 224)).astype(numpy.float32)))
+        y = cuda.to_cpu(self.link(x, ['loss2_fc2'])['loss2_fc2'].data)
+        self.assertEqual(y.shape, (1, 1000))
 
     def test_call_cpu(self):
-        self.check_call()
+        self.check_call_prob()
+        self.check_call_loss1_fc2()
+        self.check_call_loss2_fc2()
 
     @attr.gpu
     def test_call_gpu(self):
         self.link.to_gpu()
-        self.check_call()
+        self.check_call_prob()
+        self.check_call_loss1_fc2()
+        self.check_call_loss2_fc2()
 
     def test_prepare(self):
         x1 = numpy.random.uniform(0, 255, (320, 240, 3)).astype(numpy.uint8)
