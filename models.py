@@ -29,7 +29,7 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
         self.add_link('bn_fc', L.BatchNormalization(1024))
         self.add_link('fc', L.Linear(1024, out_dims))
 
-        image_mean = np.array([123, 117, 104], dtype=np.float32) / 225.0  # RGB
+        image_mean = np.array([123, 117, 104], dtype=np.float32)  # RGB
         self._image_mean = image_mean[None, :, None, None]
         self.normalize_output = normalize_output
 

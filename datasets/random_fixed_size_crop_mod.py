@@ -53,7 +53,7 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
 
     """
     def __init__(self, data_stream, window_shape=(224, 224),
-                 random_lr_flip=False, devide_by_255=True, **kwargs):
+                 random_lr_flip=False, devide_by_255=False, **kwargs):
         if not window_batch_bchw_available:
             raise ImportError('window_batch_bchw not compiled')
         self.window_shape = window_shape
@@ -103,6 +103,8 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
                 for example in out:
                     if random.randint(0, 1):
                         example[:] = example[:, :, ::-1]
+
+            out = out.astype(numpy.float32)
 
             if self.devide_by_255:
                 out = out.astype(numpy.float32) / 255.0
