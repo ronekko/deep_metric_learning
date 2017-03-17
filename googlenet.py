@@ -135,9 +135,13 @@ class GoogLeNet(link.Chain):
             ('pool4', [_max_pooling_2d]),
             ('inception_5a', [self.inc5a]),
             ('inception_5b', [self.inc5b]),
-            ('pool5', [_average_pooling_2d]),
+            ('pool5', [_average_pooling_2d_k7]),
             ('loss3_fc', [_dropout, self.loss3_fc]),
-            ('prob', [softmax])
+            ('prob', [softmax]),
+            ('loss1_fc2', [_average_pooling_2d_k5, self.loss1_conv, relu,
+                           self.loss1_fc1, relu, self.loss1_fc2]),
+            ('loss2_fc2', [_average_pooling_2d_k5, self.loss2_conv, relu,
+                           self.loss2_fc1, relu, self.loss2_fc2])
         ])
 
     @property
@@ -178,18 +182,33 @@ class GoogLeNet(link.Chain):
 
         h = x
         activations = {}
+        inception_4a_cache = None
+        inception_4d_cache = None
         target_layers = set(layers)
         for key, funcs in self.functions.items():
             if len(target_layers) == 0:
                 break
+
+            if key == 'loss1_fc2':
+                h = inception_4a_cache
+            elif key == 'loss2_fc2':
+                h = inception_4d_cache
+
             for func in funcs:
                 if func is _dropout:
                     h = func(h, train=train)
                 else:
                     h = func(h)
+
             if key in target_layers:
                 activations[key] = h
                 target_layers.remove(key)
+
+            if key == 'inception_4a':
+                inception_4a_cache = h
+            elif key == 'inception_4d':
+                inception_4d_cache = h
+
         return activations
 
     def extract(self, images, layers=['pool5'], size=(224, 224),
@@ -358,7 +377,11 @@ def _local_response_normalization(x):
     return local_response_normalization(x, n=5, k=1, alpha=1e-4/5)
 
 
-def _average_pooling_2d(x):
+def _average_pooling_2d_k5(x):
+    return average_pooling_2d(x, ksize=5, stride=3)
+
+
+def _average_pooling_2d_k7(x):
     return average_pooling_2d(x, ksize=7, stride=1)
 
 
