@@ -169,9 +169,10 @@ class GoogLeNet(link.Chain):
         """Computes all the feature maps specified by ``layers``.
 
         Args:
-            x (~chainer.Variable): Input variable.
+            x (~chainer.Variable): Input variable. ``x`` should be prepared by
+            ``prepare`` function.
             layers (list of str): The list of layer names you want to extract.
-            test (bool): If ``True``, BarchNormalization runs in test mode.
+            train (bool): If ``True``, Dropout runs in training mode.
 
         Returns:
             Dictionary of ~chainer.Variable: A directory in which
@@ -228,7 +229,7 @@ class GoogLeNet(link.Chain):
                 an input of CNN. All the given images are not resized
                 if this argument is ``None``, but the resolutions of
                 all the images should be the same.
-            test (bool): If ``True``, BatchNormalization runs in test mode.
+            train (bool): If ``True``, Dropout runs in training mode.
             volatile (~chainer.Flag): Volatility flag used for input variables.
 
         Returns:
@@ -277,7 +278,7 @@ def prepare(image, size=(224, 224)):
     """Converts the given image to the numpy array for ResNets.
 
     Note that you have to call this method before ``__call__``
-    because the pre-trained resnet model requires to resize the given
+    because the pre-trained GoogLeNet model requires to resize the given
     image, covert the RGB to the BGR, subtract the mean,
     and permute the dimensions before calling.
 
