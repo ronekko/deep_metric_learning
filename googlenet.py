@@ -138,6 +138,8 @@ class GoogLeNet(link.Chain):
             ('pool5', [_average_pooling_2d_k7]),
             ('loss3_fc', [_dropout, self.loss3_fc]),
             ('prob', [softmax]),
+            # Since usually the following outputs are not used, they are put
+            # after 'prob' to be skipped for efficiency.
             ('loss1_fc2', [_average_pooling_2d_k5, self.loss1_conv, relu,
                            self.loss1_fc1, relu, self.loss1_fc2]),
             ('loss2_fc2', [_average_pooling_2d_k5, self.loss2_conv, relu,
