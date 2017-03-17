@@ -171,7 +171,7 @@ class GoogLeNet(link.Chain):
         """Computes all the feature maps specified by ``layers``.
 
         Args:
-            x (~chainer.Variable): Input variable. ``x`` should be prepared by
+            x (~chainer.Variable): Input variable. It should be prepared by
             ``prepare`` function.
             layers (list of str): The list of layer names you want to extract.
             train (bool): If ``True``, Dropout runs in training mode.
