@@ -36,9 +36,11 @@ def clustering_loss(x, t, gamma, T=5):
         x (~chainer.Variable):
             Feature vectors.
         t (~chainer.Variable):
-            Class labels corresponding o x.
+            Class labels corresponding to x.
         gamma (~float):
             Hyperparameter gamma.
+        T (int):
+            Maximum number of iterations in Algorithm 2.
 
     Returns:
         ~chainer.Variable: Loss value.
