@@ -70,7 +70,8 @@ def main(param_dict):
             time_begin = time.time()
             epoch_losses = []
 
-            for i in tqdm(range(p.num_batches_per_epoch)):
+            for i in tqdm(range(p.num_batches_per_epoch),
+                          desc='# {}'.format(epoch)):
                 # the first half of a batch are the anchors and the latters
                 # are the positive examples corresponding to each anchor
                 x_data, c_data = next(iter_train)
@@ -188,29 +189,30 @@ def main(param_dict):
     print "[test]  soft:", logger.soft_test_best
     print "[test]  hard:", logger.hard_test_best
     print "[test]  retr:", logger.retrieval_test_best
-    print p
+    print str(p).replace(', ', '\n')
     print
 
 
 if __name__ == '__main__':
     random_state = None
-    num_runs = 100
+    num_runs = 10000
     param_distributions = dict(
-        learning_rate=LogUniformDistribution(low=1e-4, high=1e-4),
-#        l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-3),
-#        optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
+        learning_rate=LogUniformDistribution(low=1e-5, high=1e-4),
+        loss_l2_reg=LogUniformDistribution(low=1e-7, high=1e-1),
+        l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+        optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
     )
     static_params = dict(
-        num_epochs=40,
+        num_epochs=20,
         num_batches_per_epoch=500,
         batch_size=120,
         out_dim=64,
-#        learning_rate=0.0001,
-        loss_l2_reg=0.001,  # penalty for the norm of the output vector
+#        learning_rate=7.10655234311e-05,
+#        loss_l2_reg=2.80690151536e-06,  # L2-norm penalty for output vector
         crop_size=224,
         normalize_output=False,
-        l2_weight_decay=0.001,  # non-negative constant
-        optimizer='RMSProp',  # 'Adam' or 'RMSPeop'
+#        l2_weight_decay=0.00579416451873,
+#        optimizer='Adam',  # 'Adam' or 'RMSPeop'
         distance_type='euclidean',  # 'euclidean' or 'cosine'
         dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
     )
