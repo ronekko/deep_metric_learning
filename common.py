@@ -236,6 +236,17 @@ def entropy(p):
     return xp.sum(p * xp.log(p))
 
 
+class UniformDistribution(object):
+    def __init__(self, low, high):
+        assert low <= high
+        self.low = low
+        self.high = high
+
+    def rvs(self, size=None, random_state=None):
+        uniform = random_state.uniform if random_state else np.random.uniform
+        return uniform(self.low, self.high, size)
+
+
 class LogUniformDistribution(object):
     def __init__(self, low, high):
         assert low <= high
