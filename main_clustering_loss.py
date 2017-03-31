@@ -23,7 +23,7 @@ from clustering_loss import clustering_loss
 import common
 from datasets import data_provider
 from models import ModifiedGoogLeNet
-from common import LogUniformDistribution
+from common import UniformDistribution, LogUniformDistribution
 
 colorama.init()
 
@@ -197,24 +197,26 @@ def main(param_dict):
 
 if __name__ == '__main__':
     random_state = None
-    num_runs = 100
+    num_runs = 100000
     param_distributions = dict(
-        learning_rate=LogUniformDistribution(low=1e-4, high=1e-4),
-#        l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-2),
-#        optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
+        learning_rate=LogUniformDistribution(low=1e-6, high=1e-4),
+        gamma_init=LogUniformDistribution(low=1e+1, high=1e+4),
+        gamma_decay=UniformDistribution(low=0.7, high=1.0),
+        l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+        optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
     )
     static_params = dict(
-        num_epochs=40,
+        num_epochs=15,
         num_batches_per_epoch=500,
         batch_size=120,
         out_dim=64,
 #        learning_rate=0.0001,
-        gamma_init=10.0,
-        gamma_decay=0.94,
+#        gamma_init=10.0,
+#        gamma_decay=0.94,
         crop_size=224,
         normalize_output=True,
-        l2_weight_decay=0,  # non-negative constant
-        optimizer='RMSProp',  # 'Adam' or 'RMSPeop'
+#        l2_weight_decay=0,  # non-negative constant
+#        optimizer='RMSProp',  # 'Adam' or 'RMSPeop'
         distance_type='euclidean',  # 'euclidean' or 'cosine'
         dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
     )
