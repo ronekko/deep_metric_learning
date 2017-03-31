@@ -71,7 +71,8 @@ def main(param_dict):
             time_begin = time.time()
             epoch_losses = []
 
-            for i in tqdm(range(p.num_batches_per_epoch)):
+            for i in tqdm(range(p.num_batches_per_epoch),
+                          desc='# {}'.format(epoch)):
                 # the first half of a batch are the anchors and the latters
                 # are the positive examples corresponding to each anchor
                 x_data, c_data = next(iter_train)
@@ -135,7 +136,7 @@ def main(param_dict):
             print "[test]  retr:", retrieval_test
             print "[best]  soft: {} (at # {})".format(logger.soft_test_best,
                                                       logger.epoch_best)
-            print p
+            print p, 'gamma:{}'.format(gamma)
             # print norms of the weights
             params = xp.hstack([xp.linalg.norm(param.data)
                                 for param in model.params()]).tolist()
@@ -190,7 +191,7 @@ def main(param_dict):
     print "[test]  soft:", logger.soft_test_best
     print "[test]  hard:", logger.hard_test_best
     print "[test]  retr:", logger.retrieval_test_best
-    print p
+    print str(p).replace(', ', '\n')
     print
 
 
