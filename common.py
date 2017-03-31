@@ -63,8 +63,11 @@ def compute_soft_hard_retrieval(distance_matrix, labels):
     softs = []
     hards = []
     retrievals = []
+    K = 11  # "K" for top-K
     for d_i, label_i in zip(distance_matrix, labels):
-        ranked_labels = labels[np.argsort(d_i)]
+        top_k_indexes = np.argpartition(d_i, K)[:K]
+        sorted_top_k_indexes = top_k_indexes[np.argsort(d_i[top_k_indexes])]
+        ranked_labels = labels[sorted_top_k_indexes]
         # 0th entry is excluded since it is always 0
         ranked_hits = ranked_labels[1:] == label_i
 
