@@ -22,8 +22,8 @@ class TestNPairLossScheme(unittest.TestCase):
         it = scheme.get_request_iterator()
         for i in range(5):
             indexes = next(it)
-            a_indexes = indexes[:batch_size / 2]
-            p_indexes = indexes[batch_size / 2:]
+            a_indexes = indexes[:batch_size // 2]
+            p_indexes = indexes[batch_size // 2:]
             a_labels = np.array(labels)[a_indexes]
             p_labels = np.array(labels)[p_indexes]
 
@@ -47,7 +47,7 @@ class TestEpochwiseShuffledInfiniteScheme(unittest.TestCase):
         assert np.all(uniquenesses)
 
         counts = np.bincount(np.concatenate(all_indexes).ravel())
-        expected_counts = [batch_size * T / num_examples] * num_examples
+        expected_counts = [batch_size * T // num_examples] * num_examples
         assert np.array_equal(counts, expected_counts)
 
     def test_generate_valid_indexes(self):

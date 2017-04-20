@@ -99,7 +99,7 @@ class NPairLossScheme(BatchSizeScheme):
 
     def _generate_indexes(self):
         random_classes = np.random.choice(
-            self.num_classes, self.batch_size / 2, False)
+            self.num_classes, self.batch_size // 2, False)
         anchor_indexes = []
         positive_indexes = []
         for c in random_classes:
