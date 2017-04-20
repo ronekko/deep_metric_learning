@@ -195,7 +195,7 @@ class Logger(defaultdict):
             os.mkdir(dir_path)
 
         others = []
-        for key, value in self.iteritems():
+        for key, value in self.items():
             if key.startswith('_'):
                 continue
 
