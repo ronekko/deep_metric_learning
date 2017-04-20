@@ -32,7 +32,7 @@ def main(param_dict):
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
     xp = chainer.cuda.cupy
-    config_parser = six.moves.configparser.SafeConfigParser()
+    config_parser = six.moves.configparser.ConfigParser()
     config_parser.read('config')
     log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
 
