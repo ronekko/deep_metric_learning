@@ -56,19 +56,19 @@ def ap_cluster_k(x, K, preference_init=-1.0, max_iter=30,
         p = (p_lower + p_upper) / 2
         ap = AffinityPropagation(preference=p).fit(y)
         k_current = len(ap.cluster_centers_indices_)
-        print 'K = {}, k_current = {}, p = {}'.format(K, k_current, p)
-        print '{}:{}, {}:{}, {}:{}'.format(k_lower, p_lower, k_current, p,
-                                           k_upper, p_upper)
+        print('K = {}, k_current = {}, p = {}'.format(K, k_current, p))
+        print('{}:{}, {}:{}, {}:{}'.format(k_lower, p_lower, k_current, p,
+                                           k_upper, p_upper))
 
         # if the current k goes out of bounds then retry with perturbed p
         while k_current < k_lower or k_current > k_upper:
-            print "retry"
+            print("retry")
             p += np.random.uniform(p_lower, p_upper) / 10
             ap = AffinityPropagation(preference=p).fit(y)
             k_current = len(ap.cluster_centers_indices_)
-            print 'K = {}, k_current = {}, p = {}'.format(K, k_current, p)
-            print '{}:{}, {}:{}, {}:{}'.format(k_lower, p_lower, k_current, p,
-                                               k_upper, p_upper)
+            print('K = {}, k_current = {}, p = {}'.format(K, k_current, p))
+            print('{}:{}, {}:{}, {}:{}'.format(k_lower, p_lower, k_current, p,
+                                               k_upper, p_upper))
 
         if k_current < K:
             p_lower = p
@@ -88,12 +88,12 @@ def ap_cluster_k(x, K, preference_init=-1.0, max_iter=30,
     # Search further better preference in terms of NMI score by random search
     p_best = p
     score_best = normalized_mutual_info_score(c, ap.predict(y))
-    print 'initial score:', score_best
-    print
+    print('initial score:', score_best)
+    print()
     for i in range(iter_finetune):
         p = np.random.normal(p_best, (p_upper - p_lower) / 2)
         if p < p_lower or p > p_upper:  # where p is rejected
-            print 'reject'
+            print('reject')
             continue
         ap = AffinityPropagation(preference=p).fit(y)
         k_current = len(ap.cluster_centers_indices_)
@@ -104,12 +104,12 @@ def ap_cluster_k(x, K, preference_init=-1.0, max_iter=30,
         else:  # wgere k_current is K
             score = normalized_mutual_info_score(c, ap.predict(y))
             if score > score_best:
-                print "update p {} -> {}". format(p_best, p)
+                print("update p {} -> {}".format(p_best, p))
                 p_best = p
                 score_best = score
-        print 'p: {}, {}, {}'.format(p_lower, p, p_upper)
-        print 'score: {}'.format(score_best)
-        print
+        print('p: {}, {}, {}'.format(p_lower, p, p_upper))
+        print('score: {}'.format(score_best))
+        print()
     return AffinityPropagation(preference=p_best).fit(y)
 
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     ap = ap_cluster_k(y, K, preference_init=-1.0, c=c, iter_finetune=30)
     c_pred = ap.predict(y)
 
-    print normalized_mutual_info_score(c, c_pred)
+    print(normalized_mutual_info_score(c, c_pred))
     plt.plot(np.vstack((c_pred, c)).T)
     plt.show()
 #    print f1_score(c, c_pred)

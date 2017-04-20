@@ -26,7 +26,7 @@ for filename in filenames:
 
     with contextlib.closing(request.urlopen(url)) as f:
         expected_filesize = int(f.headers["content-length"])
-        print expected_filesize
+        print(expected_filesize)
     time.sleep(5)
 
     widgets = ['{}: '.format(filename), Percentage(), ' ', Bar(), ' ', ETA(),

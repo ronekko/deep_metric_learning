@@ -166,5 +166,5 @@ if __name__ == '__main__':
 
     with contexttimer.Timer() as timer:
         loss = clustering_loss(_x, _c, gamma)
-    print timer.elapsed, ' [s]'
-    print 'loss:', loss.data
+    print(timer.elapsed, ' [s]')
+    print('loss:', loss.data)
