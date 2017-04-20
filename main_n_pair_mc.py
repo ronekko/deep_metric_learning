@@ -8,9 +8,9 @@ Created on Mon Jan 09 20:49:04 2017
 import os
 import time
 import copy
-import ConfigParser
 import numpy as np
 import matplotlib.pyplot as plt
+import six
 
 import chainer
 from chainer import cuda
@@ -33,7 +33,7 @@ def main(param_dict):
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
     xp = chainer.cuda.cupy
-    config_parser = ConfigParser.SafeConfigParser()
+    config_parser = six.moves.configparser.SafeConfigParser()
     config_parser.read('config')
     log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
 
@@ -125,23 +125,23 @@ def main(param_dict):
                 logger.retrieval_best = retrieval
                 logger.retrieval_test_best = retrieval_test
 
-            print "#", epoch
-            print "time: {} ({})".format(epoch_time, total_time)
-            print "[train] loss:", loss_average
-            print "[train] soft:", soft
-            print "[train] hard:", hard
-            print "[train] retr:", retrieval
-            print "[test]  soft:", soft_test
-            print "[test]  hard:", hard_test
-            print "[test]  retr:", retrieval_test
-            print "[best]  soft: {} (at # {})".format(logger.soft_test_best,
-                                                      logger.epoch_best)
-            print p
+            print("#", epoch)
+            print("time: {} ({})".format(epoch_time, total_time))
+            print("[train] loss:", loss_average)
+            print("[train] soft:", soft)
+            print("[train] hard:", hard)
+            print("[train] retr:", retrieval)
+            print("[test]  soft:", soft_test)
+            print("[test]  hard:", hard_test)
+            print("[test]  retr:", retrieval_test)
+            print("[best]  soft: {} (at # {})".format(logger.soft_test_best,
+                                                      logger.epoch_best))
+            print(p)
             # print norms of the weights
             params = xp.hstack([xp.linalg.norm(param.data)
                                 for param in model.params()]).tolist()
-            print "|W|", map(lambda param: float('%0.2f' % param), params)
-            print
+            print("|W|", map(lambda param: float('%0.2f' % param), params))
+            print()
 
             # Draw plots
             plt.figure(figsize=(8, 4))
@@ -184,13 +184,13 @@ def main(param_dict):
     logger.save(dir_name)
     p.save(dir_name)
 
-    print "total epochs: {} ({} [s])".format(logger.epoch, logger.total_time)
-    print "best test score (at # {})".format(logger.epoch_best)
-    print "[test]  soft:", logger.soft_test_best
-    print "[test]  hard:", logger.hard_test_best
-    print "[test]  retr:", logger.retrieval_test_best
-    print str(p).replace(', ', '\n')
-    print
+    print("total epochs: {} ({} [s])".format(logger.epoch, logger.total_time))
+    print("best test score (at # {})".format(logger.epoch_best))
+    print("[test]  soft:", logger.soft_test_best)
+    print("[test]  hard:", logger.hard_test_best)
+    print("[test]  retr:", logger.retrieval_test_best)
+    print(str(p).replace(', ', '\n'))
+    print()
 
 
 if __name__ == '__main__':

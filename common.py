@@ -109,7 +109,7 @@ def compute_soft_hard_retrieval(distance_matrix, labels):
 def make_positive_pairs(num_classes, num_examples_per_class, repetition=1):
     c = num_classes
     n = num_examples_per_class
-    num_pairs_per_class = n * (n - 1) / 2
+    num_pairs_per_class = n * (n - 1) // 2
 
     pairs_posi_class0 = np.array(list(itertools.combinations(range(n), 2)))
     offsets = n * np.repeat(np.arange(c), num_pairs_per_class)[:, None]
@@ -119,7 +119,7 @@ def make_positive_pairs(num_classes, num_examples_per_class, repetition=1):
 
 def iter_combinatorial_pairs(queue, num_examples, batch_size, interval,
                              num_classes, augment_positive=False):
-    num_examples_per_class = num_examples / num_classes
+    num_examples_per_class = num_examples // num_classes
     pairs = np.array(list(itertools.combinations(range(num_examples), 2)))
 
     if augment_positive:
@@ -128,7 +128,7 @@ def iter_combinatorial_pairs(queue, num_examples, batch_size, interval,
         pairs = np.concatenate((pairs, additional_positive_pairs))
 
     num_pairs = len(pairs)
-    num_batches = num_pairs / batch_size
+    num_batches = num_pairs // batch_size
     perm = np.random.permutation(num_pairs)
     for i, batch_indexes in enumerate(np.array_split(perm, num_batches)):
         if i % interval == 0:
@@ -152,13 +152,13 @@ class NPairMCIndexMaker(object):
         K = self.num_classes
         M = self.num_per_class
         N = K * M  # number of total examples
-        num_batches = M * int(K / B)  # number of batches per epoch
+        num_batches = M * int(K // B)  # number of batches per epoch
 
         indexes = np.arange(N, dtype=np.int32).reshape(K, M)
         epoch_indexes = []
         for m in range(M):
             perm = np.random.permutation(K)
-            c_batches = np.array_split(perm, num_batches / M)
+            c_batches = np.array_split(perm, num_batches // M)
             for c_batch in c_batches:
                 b = len(c_batch)  # actual number of examples of this batch
                 indexes_anchor = M * c_batch + m
@@ -195,7 +195,7 @@ class Logger(defaultdict):
             os.mkdir(dir_path)
 
         others = []
-        for key, value in self.iteritems():
+        for key, value in self.items():
             if key.startswith('_'):
                 continue
 

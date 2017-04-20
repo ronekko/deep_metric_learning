@@ -63,7 +63,7 @@ def lifted_struct_loss(f_a, f_p, alpha=1.0):
     # distances_p = F.sqrt(D_sq[pairs_p[0], pairs_p[1]])
     # distances_n = F.sqrt(D_sq[pairs_n[0], pairs_n[1]])
 
-    distances_n = F.reshape(distances_n, (n / 2, -1))
+    distances_n = F.reshape(distances_n, (n // 2, -1))
     loss_ij = F.logsumexp(alpha - distances_n, axis=1) + distances_p
     return F.sum(F.relu(loss_ij) ** 2) / n
 
@@ -73,8 +73,8 @@ if __name__ == '__main__':
     D = 64
     alpha = 1.0
 
-    f_a = np.random.randn(N / 2, D).astype(np.float32)
-    f_p = np.random.randn(N / 2, D).astype(np.float32)
+    f_a = np.random.randn(N // 2, D).astype(np.float32)
+    f_p = np.random.randn(N // 2, D).astype(np.float32)
 
     import chainer
     f_a_cpu = chainer.Variable(f_a)
