@@ -92,6 +92,9 @@ class NPairLossScheme(BatchSizeScheme):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         anchor_indexes, positive_indexes = self._generate_indexes()
         indexes = anchor_indexes + positive_indexes
