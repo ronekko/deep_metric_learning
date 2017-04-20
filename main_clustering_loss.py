@@ -8,9 +8,9 @@ Created on Mon Feb 06 17:12:58 2017
 import os
 import time
 import copy
-import ConfigParser
 import numpy as np
 import matplotlib.pyplot as plt
+import six
 
 import chainer
 from chainer import cuda
@@ -32,7 +32,7 @@ def main(param_dict):
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
     xp = chainer.cuda.cupy
-    config_parser = ConfigParser.SafeConfigParser()
+    config_parser = six.moves.configparser.SafeConfigParser()
     config_parser.read('config')
     log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
 
