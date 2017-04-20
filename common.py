@@ -18,13 +18,14 @@ from chainer import Variable
 from chainer import Optimizer
 from chainer import Chain, ChainList
 from chainer.serializers import save_npz
+from tqdm import tqdm
 
 
 def iterate_forward(model, epoch_iterator, train=False, normalize=False):
     xp = model.xp
     y_batches = []
     c_batches = []
-    for batch in copy.copy(epoch_iterator):
+    for batch in tqdm(copy.copy(epoch_iterator)):
         x_batch_data, c_batch_data = batch
         x_batch = Variable(xp.asarray(x_batch_data), volatile=not train)
         y_batch = model(x_batch, train=train)
@@ -43,6 +44,24 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
 
 # average accuracy and distance matrix for test data
 def evaluate(model, epoch_iterator, distance='euclidean', normalize=False):
+    # fprop to calculate distance matrix (not for backprop)
+    y_data, c_data = iterate_forward(
+        model, epoch_iterator, train=False, normalize=normalize)
+
+    # compute the distance matrix of the list of ys
+    if distance == 'euclidean':
+        D = euclidean_distances(y_data, squared=False)
+    elif distance == 'cosine':
+        D = cosine_distances(y_data)
+    else:
+        raise ValueError("distance must be 'euclidean' or 'cosine'.")
+
+    soft, hard, retrieval = compute_soft_hard_retrieval(D, c_data)
+    return D, soft, hard, retrieval
+
+
+# memory friendly average accuracy for test data (without distance matricies)
+def evaluate2(model, epoch_iterator, distance='euclidean', normalize=False):
     # fprop to calculate distance matrix (not for backprop)
     y_data, c_data = iterate_forward(
         model, epoch_iterator, train=False, normalize=normalize)
