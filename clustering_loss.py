@@ -58,7 +58,7 @@ def clustering_loss(x, t, gamma, T=5):
     batch_size = len(t.data)
     num_classes = len(np.unique(t_cpu))
 
-    v = range(batch_size)
+    v = list(range(batch_size))
     s = []
 
     # First, search the sub-optimal solution y_PAM of the clustering.

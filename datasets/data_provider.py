@@ -130,6 +130,9 @@ class EpochwiseShuffledInfiniteScheme(BatchSizeScheme):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         batch_size = self.batch_size
 
