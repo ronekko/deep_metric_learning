@@ -11,7 +11,7 @@ from chainer.testing import attr
 from chainer.testing import parameterize
 from chainer.utils import type_check
 
-from .. import get_item_mod as functions
+#from .. import get_item_mod as functions
 
 
 @parameterize(
@@ -97,10 +97,6 @@ class TestInvalidGetItem(unittest.TestCase):
         with self.assertRaises(type_check.InvalidType):
             functions.get_item(self.x_data, (0, 0, 0, 0))
 
-    def test_advanced_indexing_nested_list(self):
-        with self.assertRaises(ValueError):
-            functions.get_item(self.x_data, [[0, 0, 0]])
-
 
 @parameterize(
     {'shape': (5,), 'slices': [0, 1, 2, 3, 4], 'sliced_shape': (5,)},
@@ -116,13 +112,15 @@ class TestInvalidGetItem(unittest.TestCase):
 class TestGetItemAdvancedIndexing(unittest.TestCase):
 
     def setUp(self):
-        self.x_data = numpy.random.uniform(-1, 1, self.shape)
-        self.gy_data = numpy.random.uniform(-1, 1, self.sliced_shape)
+        self.x_data = numpy.random.uniform(
+            -1, 1, self.shape).astype(numpy.float32)
+        self.gy_data = numpy.random.uniform(
+            -1, 1, self.sliced_shape).astype(numpy.float32)
 
     def check_forward(self, x_data):
         x = chainer.Variable(x_data)
         y = functions.get_item(x, self.slices)
-        self.assertEqual(y.data.dtype, numpy.float)
+        self.assertEqual(y.data.dtype, numpy.float32)
         numpy.testing.assert_equal(cuda.to_cpu(x_data)[self.slices],
                                    cuda.to_cpu(y.data))
 
