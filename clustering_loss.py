@@ -13,7 +13,6 @@ import chainer
 from chainer import cuda
 import chainer.functions as F
 
-from get_item_mod import get_item
 from common import normalized_mutual_info_score
 
 
@@ -142,8 +141,8 @@ def clustering_loss(x, t, gamma, T=5):
         y_star_c = js[fs.argmin()]
         y_star[js] = y_star_c
 
-    f = -F.sum(F.batch_l2_norm_squared(x - get_item(x, y_pam)))
-    f_tilde = -F.sum(F.batch_l2_norm_squared(x - get_item(x, y_star)))
+    f = -F.sum(F.batch_l2_norm_squared(x - x[y_pam]))
+    f_tilde = -F.sum(F.batch_l2_norm_squared(x - x[y_star]))
     loss = F.relu(f + gamma * delta - f_tilde)
     return loss
 
