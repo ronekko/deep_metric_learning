@@ -13,20 +13,6 @@ import chainer
 from chainer import cuda
 import chainer.functions as F
 
-from common import normalized_mutual_info_score
-
-
-def distance_matrix(x, add_epsilon=True):
-    xp = chainer.cuda.get_array_module(x)
-    xx = xp.sum(x ** 2.0, axis=1)
-    mat = xx + xx[:, None] - 2.0 * xp.dot(x, x.T)
-    xp.maximum(mat, 0, out=mat)
-    if add_epsilon:
-        mat += 1e-40
-    # ensure the diagonal components are zero
-    xp.fill_diagonal(mat, 0)
-    return mat
-
 
 def clustering_loss(x, t, gamma, T=5):
     """Clustering loss function for metric learning.
@@ -145,6 +131,58 @@ def clustering_loss(x, t, gamma, T=5):
     f_tilde = -F.sum(F.batch_l2_norm_squared(x - x[y_star]))
     loss = F.relu(f + gamma * delta - f_tilde)
     return loss
+
+
+def distance_matrix(x, add_epsilon=True):
+    xp = chainer.cuda.get_array_module(x)
+    xx = xp.sum(x ** 2.0, axis=1)
+    mat = xx + xx[:, None] - 2.0 * xp.dot(x, x.T)
+    xp.maximum(mat, 0, out=mat)
+    if add_epsilon:
+        mat += 1e-40
+    # ensure the diagonal components are zero
+    xp.fill_diagonal(mat, 0)
+    return mat
+
+
+def normalized_mutual_info_score(x, y):
+    xp = chainer.cuda.get_array_module(x)
+
+    contingency = contingency_matrix(x, y)
+    nonzero_mask = contingency != 0
+    nonzero_val = contingency[nonzero_mask]
+
+    pi = contingency.sum(axis=1, keepdims=True)
+    pj = contingency.sum(axis=0, keepdims=True)
+    total_mass = pj.sum()
+    pi /= total_mass
+    pj /= total_mass
+    pi_pj = (pj * pi)[nonzero_mask]
+
+    pij = nonzero_val / total_mass
+    log_pij = xp.log(pij)
+    log_pi_pj = xp.log(pi_pj)
+    mi = xp.sum(pij * (log_pij - log_pi_pj))
+    nmi = mi / max(xp.sqrt(entropy(pi) * entropy(pj)), 1e-10)
+    return xp.clip(nmi, 0, 1)
+
+
+def contingency_matrix(x, y):
+    xp = chainer.cuda.get_array_module(x)
+    n_bins_x = int(x.max()) + 1
+    n_bins_y = int(y.max()) + 1
+    n_bins = n_bins_x * n_bins_y
+    i = x * n_bins_y + y
+    flat_contingency = xp.bincount(i, xp.ones(len(i)), minlength=n_bins)
+    return flat_contingency.reshape((n_bins_x, n_bins_y))
+
+
+def entropy(p):
+    if len(p) == 0:
+        return 1.0
+    xp = chainer.cuda.get_array_module(p)
+    p = p[p > 0]
+    return xp.sum(p * xp.log(p))
 
 
 if __name__ == '__main__':
