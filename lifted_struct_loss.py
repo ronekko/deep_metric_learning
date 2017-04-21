@@ -8,8 +8,6 @@ Created on Tue Jan 31 15:40:26 2017
 import numpy as np
 import chainer.functions as F
 
-from get_item_mod import get_item
-
 
 def squared_distance_matrix(X):
     n = X.shape[0]
@@ -53,17 +51,9 @@ def lifted_struct_loss(f_a, f_p, alpha=1.0):
     col = np.ravel(col)
     pairs_n = np.vstack((row, col))
 
-    indexes_p = n * pairs_p[0] + pairs_p[1]
-    indexes_n = n * pairs_n[0] + pairs_n[1]
-    D_sq_flat = F.flatten(D_sq)
-    distances_p = F.sqrt(get_item(D_sq_flat, indexes_p))
-    distances_n = F.sqrt(get_item(D_sq_flat, indexes_n))
-
-    # The above should be written as below...
-    # distances_p = F.sqrt(D_sq[pairs_p[0], pairs_p[1]])
-    # distances_n = F.sqrt(D_sq[pairs_n[0], pairs_n[1]])
-
     distances_n = F.reshape(distances_n, (n // 2, -1))
+    distances_p = F.sqrt(D_sq[pairs_p[0], pairs_p[1]])
+    distances_n = F.sqrt(D_sq[pairs_n[0], pairs_n[1]])
     loss_ij = F.logsumexp(alpha - distances_n, axis=1) + distances_p
     return F.sum(F.relu(loss_ij) ** 2) / n
 
