@@ -51,9 +51,9 @@ def lifted_struct_loss(f_a, f_p, alpha=1.0):
     col = np.ravel(col)
     pairs_n = np.vstack((row, col))
 
-    distances_n = F.reshape(distances_n, (n // 2, -1))
     distances_p = F.sqrt(D_sq[pairs_p[0], pairs_p[1]])
     distances_n = F.sqrt(D_sq[pairs_n[0], pairs_n[1]])
+    distances_n = distances_n.reshape((n // 2, -1))
     loss_ij = F.logsumexp(alpha - distances_n, axis=1) + distances_p
     return F.sum(F.relu(loss_ij) ** 2) / n
 
@@ -73,15 +73,18 @@ if __name__ == '__main__':
     loss_cpu.backward()
     ########
     import cupy
-    f_a = cupy.asarray(f_a)
-    f_p = cupy.asarray(f_p)
-    f_a_gpu = chainer.Variable(f_a)
-    f_p_gpu = chainer.Variable(f_p)
+    f_a_gpu = cupy.asarray(f_a)
+    f_p_gpu = cupy.asarray(f_p)
+    f_a_gpu = chainer.Variable(f_a_gpu)
+    f_p_gpu = chainer.Variable(f_p_gpu)
     ########
 
     loss_gpu = lifted_struct_loss(f_a_gpu, f_p_gpu, alpha)
     loss_gpu.backward()
 
-    assert np.allclose(f_a_cpu.grad, f_a_gpu.grad.get())
+    assert np.allclose(f_a_cpu.data, f_a_gpu.data.get(), rtol=1e-3)
+    assert np.allclose(f_p_cpu.data, f_p_gpu.data.get(), rtol=1e-3)
+    assert np.allclose(loss_cpu.data, loss_gpu.data.get())
+    assert np.allclose(f_a_cpu.grad, f_a_gpu.grad.get(), rtol=1e-3)
     assert np.allclose(f_p_cpu.grad, f_p_gpu.grad.get(), rtol=1e-3)
     assert np.allclose(loss_cpu.grad, loss_gpu.grad.get())
