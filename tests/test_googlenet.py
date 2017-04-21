@@ -7,7 +7,7 @@ from chainer import testing
 from chainer.testing import attr
 from chainer.variable import Variable
 
-from .. import googlenet
+from ..models import googlenet
 
 
 @unittest.skipUnless(googlenet.available, 'Pillow is required')

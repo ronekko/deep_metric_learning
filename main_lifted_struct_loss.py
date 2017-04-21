@@ -20,10 +20,10 @@ from tqdm import tqdm
 import colorama
 from sklearn.model_selection import ParameterSampler
 
-from lifted_struct_loss import lifted_struct_loss
+from functions.lifted_struct_loss import lifted_struct_loss
 import common
 from datasets import data_provider
-from models import ModifiedGoogLeNet
+from models.modified_googlenet import ModifiedGoogLeNet
 from common import LogUniformDistribution
 
 colorama.init()

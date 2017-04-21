@@ -19,10 +19,10 @@ from tqdm import tqdm
 import colorama
 from sklearn.model_selection import ParameterSampler
 
-from clustering_loss import clustering_loss
+from functions.clustering_loss import clustering_loss
 import common
 from datasets import data_provider
-from models import ModifiedGoogLeNet
+from models.modified_googlenet import ModifiedGoogLeNet
 from common import UniformDistribution, LogUniformDistribution
 
 colorama.init()

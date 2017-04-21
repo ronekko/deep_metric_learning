@@ -16,7 +16,7 @@ from chainer import gradient_check
 from chainer import testing
 from chainer.testing import attr
 
-from ..n_pair_mc_loss import n_pair_mc_loss
+from ..functions.n_pair_mc_loss import n_pair_mc_loss
 
 
 class TestNPairsMCLoss(unittest.TestCase):
