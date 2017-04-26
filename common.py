@@ -42,27 +42,9 @@ def iterate_forward(model, epoch_iterator, train=False, normalize=False):
     return y_data, c_data
 
 
-# average accuracy and distance matrix for test data
-def evaluate(model, epoch_iterator, distance='euclidean', normalize=False):
-    # fprop to calculate distance matrix (not for backprop)
-    y_data, c_data = iterate_forward(
-        model, epoch_iterator, train=False, normalize=normalize)
-
-    # compute the distance matrix of the list of ys
-    if distance == 'euclidean':
-        D = euclidean_distances(y_data, squared=False)
-    elif distance == 'cosine':
-        D = cosine_distances(y_data)
-    else:
-        raise ValueError("distance must be 'euclidean' or 'cosine'.")
-
-    soft, hard, retrieval = compute_soft_hard_retrieval(D, c_data)
-    return D, soft, hard, retrieval
-
-
-# memory friendly average accuracy for test data (without distance matricies)
-def evaluate2(model, epoch_iterator, distance='euclidean', normalize=False,
-              batch_size=10, return_distance_matrix=False):
+# memory friendly average accuracy for test data
+def evaluate(model, epoch_iterator, distance='euclidean', normalize=False,
+             batch_size=10, return_distance_matrix=False):
     if distance not in ('cosine', 'euclidean'):
         raise ValueError("distance must be 'euclidean' or 'cosine'.")
 

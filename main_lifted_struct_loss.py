@@ -29,7 +29,7 @@ from common import LogUniformDistribution
 colorama.init()
 
 
-def main(param_dict):
+def main(param_dict, save_distance_matrix=False):
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
     device = 0
     xp = chainer.cuda.cupy
@@ -94,11 +94,13 @@ def main(param_dict):
 
             # average accuracy and distance matrix for training data
             D, soft, hard, retrieval = common.evaluate(
-                model, stream_train_eval.get_epoch_iterator(), p.distance_type)
+                model, stream_train_eval.get_epoch_iterator(), p.distance_type,
+                return_distance_matrix=save_distance_matrix)
 
             # average accuracy and distance matrix for testing data
             D_test, soft_test, hard_test, retrieval_test = common.evaluate(
-                model, stream_test.get_epoch_iterator(), p.distance_type)
+                model, stream_test.get_epoch_iterator(), p.distance_type,
+                return_distance_matrix=save_distance_matrix)
 
             time_end = time.time()
             epoch_time = time_end - time_begin
@@ -144,14 +146,15 @@ def main(param_dict):
             print()
 
             # Draw plots
-            plt.figure(figsize=(8, 4))
-            plt.subplot(1, 2, 1)
-            mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
-            plt.colorbar(mat, fraction=0.045)
-            plt.subplot(1, 2, 2)
-            mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
-            plt.colorbar(mat, fraction=0.045)
-            plt.tight_layout()
+            if save_distance_matrix:
+                plt.figure(figsize=(8, 4))
+                plt.subplot(1, 2, 1)
+                mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
+                plt.colorbar(mat, fraction=0.045)
+                plt.subplot(1, 2, 2)
+                mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
+                plt.colorbar(mat, fraction=0.045)
+                plt.tight_layout()
 
             plt.figure(figsize=(8, 4))
             plt.subplot(1, 2, 1)
@@ -196,6 +199,7 @@ def main(param_dict):
 if __name__ == '__main__':
     random_state = None
     num_runs = 100
+    save_distance_matrix = False
     param_distributions = dict(
         learning_rate=LogUniformDistribution(low=1e-4, high=1e-4),
 #        l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-3),
@@ -223,4 +227,4 @@ if __name__ == '__main__':
         params.update(random_params)
         params.update(static_params)
 
-        main(params)
+        main(params, save_distance_matrix)
