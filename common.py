@@ -61,29 +61,69 @@ def evaluate(model, epoch_iterator, distance='euclidean', normalize=False):
 
 
 # memory friendly average accuracy for test data (without distance matricies)
-def evaluate2(model, epoch_iterator, distance='euclidean', normalize=False):
+def evaluate2(model, epoch_iterator, distance='euclidean', normalize=False,
+              batch_size=10, return_distance_matrix=False):
     # fprop to calculate distance matrix (not for backprop)
     y_data, c_data = iterate_forward(
         model, epoch_iterator, train=False, normalize=normalize)
 
-    # compute the distance matrix of the list of ys
-    if distance == 'euclidean':
-        D = euclidean_distances(y_data, squared=False)
-    elif distance == 'cosine':
-        D = cosine_distances(y_data)
-    else:
-        raise ValueError("distance must be 'euclidean' or 'cosine'.")
+    add_epsilon = True
+    xp = cuda.get_array_module(y_data)
+    num_examples = len(y_data)
 
-    soft, hard, retrieval = compute_soft_hard_retrieval(D, c_data)
-    return D, soft, hard, retrieval
-
-
-def compute_soft_hard_retrieval(distance_matrix, labels):
+    D_batches = []
     softs = []
     hards = []
     retrievals = []
+    yy = xp.sum(y_data ** 2.0, axis=1)
+    for start in range(0, num_examples, batch_size):
+        end = start + batch_size
+        if end > num_examples:
+            end = num_examples
+        y_batch = y_data[start:end]
+        yy_batch = yy[start:end]
+        c_batch = c_data[start:end]
+
+        D_batch = yy + yy_batch[:, None] - 2.0 * xp.dot(y_batch, y_data.T)
+        xp.maximum(D_batch, 0, out=D_batch)
+        if add_epsilon:
+            D_batch += 1e-40
+        # ensure the diagonal components are zero
+        xp.fill_diagonal(D_batch[:, start:end], 0)
+
+        soft, hard, retr = compute_soft_hard_retrieval(
+            D_batch, c_data, c_batch)
+
+        softs.append(len(y_batch) * soft)
+        hards.append(len(y_batch) * hard)
+        retrievals.append(len(y_batch) * retr)
+        if return_distance_matrix:
+            D_batches.append(D_batch)
+
+    avg_softs = xp.sum(softs, axis=0) / num_examples
+    avg_hards = xp.sum(hards, axis=0) / num_examples
+    avg_retrievals = xp.sum(retrievals, axis=0) / num_examples
+
+    if return_distance_matrix:
+        D = cuda.to_cpu(xp.vstack(D_batches))
+    else:
+        D = None
+    return D, avg_softs, avg_hards, avg_retrievals
+
+
+def compute_soft_hard_retrieval(distance_matrix, labels, label_batch=None):
+    softs = []
+    hards = []
+    retrievals = []
+
+    if label_batch is None:
+        label_batch = labels
+    distance_matrix = cuda.to_cpu(distance_matrix)
+    labels = cuda.to_cpu(labels)
+    label_batch = cuda.to_cpu(label_batch)
+
     K = 11  # "K" for top-K
-    for d_i, label_i in zip(distance_matrix, labels):
+    for d_i, label_i in zip(distance_matrix, label_batch):
         top_k_indexes = np.argpartition(d_i, K)[:K]
         sorted_top_k_indexes = top_k_indexes[np.argsort(d_i[top_k_indexes])]
         ranked_labels = labels[sorted_top_k_indexes]
