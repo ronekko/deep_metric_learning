@@ -63,7 +63,9 @@ def evaluate(model, epoch_iterator, distance='euclidean', normalize=False):
 # memory friendly average accuracy for test data (without distance matricies)
 def evaluate2(model, epoch_iterator, distance='euclidean', normalize=False,
               batch_size=10, return_distance_matrix=False):
-    # fprop to calculate distance matrix (not for backprop)
+    if distance not in ('cosine', 'euclidean'):
+        raise ValueError("distance must be 'euclidean' or 'cosine'.")
+
     y_data, c_data = iterate_forward(
         model, epoch_iterator, train=False, normalize=normalize)
 
@@ -76,6 +78,10 @@ def evaluate2(model, epoch_iterator, distance='euclidean', normalize=False,
     hards = []
     retrievals = []
     yy = xp.sum(y_data ** 2.0, axis=1)
+
+    if distance == 'cosine':
+        y_data = y_data / yy[:, None]  # L2 normalization
+
     for start in range(0, num_examples, batch_size):
         end = start + batch_size
         if end > num_examples:
