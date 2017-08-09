@@ -31,6 +31,7 @@ colorama.init()
 
 def main(param_dict, save_distance_matrix=False):
     script_filename = os.path.splitext(os.path.basename(__file__))[0]
+    chainer.config.train = False
     device = 0
     xp = chainer.cuda.cupy
     config_parser = six.moves.configparser.ConfigParser()
@@ -78,12 +79,14 @@ def main(param_dict, save_distance_matrix=False):
                 if device >= 0:
                     x_data = cuda.to_gpu(x_data, device)
                     c_data = cuda.to_gpu(c_data, device)
-                y = model(x_data, train=True)
-                y_a, y_p = F.split_axis(y, 2, axis=0)
 
-                loss = n_pair_mc_loss(y_a, y_p, p.loss_l2_reg)
-                optimizer.zero_grads()
-                loss.backward()
+                with chainer.using_config('train', True):
+                    y = model(x_data)
+                    y_a, y_p = F.split_axis(y, 2, axis=0)
+
+                    loss = n_pair_mc_loss(y_a, y_p, p.loss_l2_reg)
+                    model.cleargrads()
+                    loss.backward()
                 optimizer.update()
 
                 epoch_losses.append(loss.data)
@@ -181,7 +184,8 @@ def main(param_dict, save_distance_matrix=False):
     except KeyboardInterrupt:
         pass
 
-    dir_name = "-".join([script_filename, time.strftime("%Y%m%d%H%M%S"),
+    dir_name = "-".join([p.dataset, script_filename,
+                         time.strftime("%Y%m%d%H%M%S"),
                          str(logger.soft_test_best[0])])
 
     logger.save(dir_name)
@@ -218,7 +222,8 @@ if __name__ == '__main__':
 #        l2_weight_decay=0.00579416451873,
 #        optimizer='Adam',  # 'Adam' or 'RMSPeop'
         distance_type='euclidean',  # 'euclidean' or 'cosine'
-        dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
+#        dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
+        dataset='cub200_2011'  # 'cars196' or 'cub200_2011' or 'products'
     )
 
     sampler = ParameterSampler(param_distributions, num_runs, random_state)

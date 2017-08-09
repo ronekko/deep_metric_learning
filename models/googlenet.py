@@ -19,7 +19,6 @@ except ImportError as e:
 
 from chainer.dataset.convert import concat_examples
 from chainer.dataset import download
-from chainer import flag
 from chainer.functions.activation.relu import relu
 from chainer.functions.activation.softmax import softmax
 from chainer.functions.array.reshape import reshape
@@ -198,10 +197,7 @@ class GoogLeNet(link.Chain):
                 h = inception_4d_cache
 
             for func in funcs:
-                if func is _dropout:
-                    h = func(h, train=train)
-                else:
-                    h = func(h)
+                h = func(h)
 
             if key in target_layers:
                 activations[key] = h
@@ -214,8 +210,7 @@ class GoogLeNet(link.Chain):
 
         return activations
 
-    def extract(self, images, layers=['pool5'], size=(224, 224),
-                train=False, volatile=flag.OFF):
+    def extract(self, images, layers=['pool5'], size=(224, 224)):
         """Extracts all the feature maps of given images.
 
         The difference of directly executing ``__call__`` is that
@@ -242,8 +237,8 @@ class GoogLeNet(link.Chain):
         """
 
         x = concat_examples([prepare(img, size=size) for img in images])
-        x = Variable(self.xp.asarray(x), volatile=volatile)
-        return self(x, layers=layers, train=train)
+        x = Variable(self.xp.asarray(x))
+        return self(x, layers=layers)
 
     def predict(self, images, oversample=True):
         """Computes all the probabilities of given images.
@@ -266,7 +261,7 @@ class GoogLeNet(link.Chain):
         else:
             x = x[:, :, 16:240, 16:240]
         # Set volatile option to ON to reduce memory consumption
-        x = Variable(self.xp.asarray(x), volatile=flag.ON)
+        x = Variable(self.xp.asarray(x))
         y = self(x, layers=['prob'])['prob']
         if oversample:
             n = y.data.shape[0] // 10
@@ -388,8 +383,8 @@ def _average_pooling_2d_k7(x):
     return average_pooling_2d(x, ksize=7, stride=1)
 
 
-def _dropout(x, train):
-    return dropout(x, ratio=0.4, train=train)
+def _dropout(x):
+    return dropout(x, ratio=0.4)
 
 
 def _make_npz(path_npz, url, model):
