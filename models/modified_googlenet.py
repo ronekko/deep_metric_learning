@@ -18,7 +18,7 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
     def __init__(self, out_dims=64, normalize_output=False):
         super(ModifiedGoogLeNet, self).__init__()
         # remove links and functions
-        for name in filter(lambda n: n.startswith('loss'), self._children):
+        for name in [n for n in self._children if n.startswith('loss')]:
             self._children.remove(name)
             delattr(self, name)
         self.functions.pop('loss3_fc')
@@ -31,7 +31,7 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
         self._image_mean = image_mean[None, :, None, None]
         self.normalize_output = normalize_output
 
-    def __call__(self, x, train=False, subtract_mean=True):
+    def __call__(self, x, subtract_mean=True):
         if subtract_mean:
             x = x - self._image_mean
 #        h = super(ModifiedGoogLeNet, self).__call__(
@@ -58,7 +58,7 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
         h = self.inc5a(h)
         h = self.inc5b(h)
         h = F.average_pooling_2d(h, 7, stride=1)
-        h = self.bn_fc(h, test=not train)
+        h = self.bn_fc(h)
         y = self.fc(h)
         if self.normalize_output:
             y = F.normalize(y)

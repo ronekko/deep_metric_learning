@@ -21,14 +21,14 @@ from chainer.serializers import save_npz
 from tqdm import tqdm
 
 
-def iterate_forward(model, epoch_iterator, train=False, normalize=False):
+def iterate_forward(model, epoch_iterator, normalize=False):
     xp = model.xp
     y_batches = []
     c_batches = []
     for batch in tqdm(copy.copy(epoch_iterator)):
         x_batch_data, c_batch_data = batch
-        x_batch = Variable(xp.asarray(x_batch_data), volatile=not train)
-        y_batch = model(x_batch, train=train)
+        x_batch = Variable(xp.asarray(x_batch_data))
+        y_batch = model(x_batch)
         if normalize:
             y_batch_data = y_batch.data / xp.linalg.norm(
                 y_batch.data, axis=1, keepdims=True)
@@ -48,8 +48,9 @@ def evaluate(model, epoch_iterator, distance='euclidean', normalize=False,
     if distance not in ('cosine', 'euclidean'):
         raise ValueError("distance must be 'euclidean' or 'cosine'.")
 
-    y_data, c_data = iterate_forward(
-        model, epoch_iterator, train=False, normalize=normalize)
+    with chainer.using_config('train', False):
+        y_data, c_data = iterate_forward(
+                model, epoch_iterator, normalize=normalize)
 
     add_epsilon = True
     xp = cuda.get_array_module(y_data)
