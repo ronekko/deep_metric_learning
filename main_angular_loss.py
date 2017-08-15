@@ -64,6 +64,13 @@ def main(param_dict, save_distance_matrix=False):
     if p.l2_weight_decay:
         optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
 
+    # Set 10 times larger learning rate for optimization of the last layer
+    if p.lr_tenfold_last_layer:
+        for param in model.fc.params():
+            param.update_rule.hyperparam.alpha *= 10
+
+    print(p)
+    stop = False
     logger = common.Logger(log_dir_path)
     logger.soft_test_best = [0]
     time_origin = time.time()
@@ -183,7 +190,7 @@ def main(param_dict, save_distance_matrix=False):
             D_test = None
 
     except KeyboardInterrupt:
-        pass
+        stop = True
 
     dir_name = "-".join([p.dataset, script_filename,
                          time.strftime("%Y%m%d%H%M%S"),
@@ -200,27 +207,31 @@ def main(param_dict, save_distance_matrix=False):
     print(str(p).replace(', ', '\n'))
     print()
 
+    return stop
+
 
 if __name__ == '__main__':
     random_state = None
     num_runs = 10000
     save_distance_matrix = False
     param_distributions = dict(
-        learning_rate=LogUniformDistribution(low=1e-6, high=1e-2),
-        alpha=UniformDistribution(low=10, high=50),
+        learning_rate=LogUniformDistribution(low=6e-6, high=4e-5),
+        alpha=UniformDistribution(low=5, high=20),
 #        l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
-        optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
+#        optimizer=['RMSProp', 'Adam'],  # 'RMSPeop' or 'Adam'
+#        lr_tenfold_last_layer=[True, False]
     )
     static_params = dict(
-        num_epochs=5,
+        num_epochs=40,
         num_batches_per_epoch=500,
         batch_size=120,
         out_dim=64,
 #        learning_rate=7.10655234311e-05,
         crop_size=224,
-        normalize_output=True,
+        normalize_output=False,
 #        l2_weight_decay=0.00579416451873,
-#        optimizer='Adam',  # 'Adam' or 'RMSPeop'
+        optimizer='Adam',  # 'Adam' or 'RMSPeop'
+        lr_tenfold_last_layer=False,
         distance_type='euclidean',  # 'euclidean' or 'cosine'
 #        dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
         dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
@@ -233,4 +244,6 @@ if __name__ == '__main__':
         params.update(random_params)
         params.update(static_params)
 
-        main(params, save_distance_matrix)
+        stop = main(params, save_distance_matrix)
+        if stop:
+            break
