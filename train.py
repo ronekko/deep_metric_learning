@@ -17,9 +17,9 @@ import chainer
 from chainer import optimizers
 from chainer import cuda
 
-import common
-from datasets import data_provider
-from models.modified_googlenet import ModifiedGoogLeNet
+from . import common
+from .datasets import data_provider
+from .models.modified_googlenet import ModifiedGoogLeNet
 
 
 def train(main_script_path, func_train_one_batch, param_dict,
