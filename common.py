@@ -48,9 +48,10 @@ def evaluate(model, epoch_iterator, distance='euclidean', normalize=False,
     if distance not in ('cosine', 'euclidean'):
         raise ValueError("distance must be 'euclidean' or 'cosine'.")
 
-    with chainer.using_config('train', False):
-        y_data, c_data = iterate_forward(
-                model, epoch_iterator, normalize=normalize)
+    with chainer.no_backprop_mode():
+        with chainer.using_config('train', False):
+            y_data, c_data = iterate_forward(
+                    model, epoch_iterator, normalize=normalize)
 
     add_epsilon = True
     xp = cuda.get_array_module(y_data)
