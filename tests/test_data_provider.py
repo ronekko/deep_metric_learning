@@ -9,8 +9,8 @@ import unittest
 
 import numpy as np
 
-from ..datasets.data_provider import NPairLossScheme
-from ..datasets.data_provider import EpochwiseShuffledInfiniteScheme
+from deep_metric_learning.lib.datasets.data_provider import (
+    NPairLossScheme, EpochwiseShuffledInfiniteScheme)
 
 
 class TestNPairLossScheme(unittest.TestCase):

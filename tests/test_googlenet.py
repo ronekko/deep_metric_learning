@@ -7,7 +7,7 @@ from chainer import testing
 from chainer.testing import attr
 from chainer.variable import Variable
 
-from ..models import googlenet
+from deep_metric_learning.lib.models import googlenet
 
 
 @unittest.skipUnless(googlenet.available, 'Pillow is required')

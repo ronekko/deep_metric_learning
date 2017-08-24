@@ -1,139 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov 03 01:55:58 2016
+Created on Thu Aug 24 15:37:08 2017
 
 @author: sakurai
 """
 
 from collections import defaultdict
-import copy
 import itertools
 import os
 import numpy as np
-from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
+import yaml
 
 import chainer
-from chainer import cuda
-from chainer import Variable
-from chainer import Optimizer
-from chainer import Chain, ChainList
-from chainer.serializers import save_npz
-from tqdm import tqdm
 
 
-def iterate_forward(model, epoch_iterator, normalize=False):
-    xp = model.xp
-    y_batches = []
-    c_batches = []
-    for batch in tqdm(copy.copy(epoch_iterator)):
-        x_batch_data, c_batch_data = batch
-        x_batch = Variable(xp.asarray(x_batch_data))
-        y_batch = model(x_batch)
-        if normalize:
-            y_batch_data = y_batch.data / xp.linalg.norm(
-                y_batch.data, axis=1, keepdims=True)
-        else:
-            y_batch_data = y_batch.data
-        y_batches.append(y_batch_data)
-        y_batch = None
-        c_batches.append(c_batch_data)
-    y_data = cuda.to_cpu(xp.concatenate(y_batches))
-    c_data = np.concatenate(c_batches)
-    return y_data, c_data
-
-
-# memory friendly average accuracy for test data
-def evaluate(model, epoch_iterator, distance='euclidean', normalize=False,
-             batch_size=10, return_distance_matrix=False):
-    if distance not in ('cosine', 'euclidean'):
-        raise ValueError("distance must be 'euclidean' or 'cosine'.")
-
-    with chainer.no_backprop_mode():
-        with chainer.using_config('train', False):
-            y_data, c_data = iterate_forward(
-                    model, epoch_iterator, normalize=normalize)
-
-    add_epsilon = True
-    xp = cuda.get_array_module(y_data)
-    num_examples = len(y_data)
-
-    D_batches = []
-    softs = []
-    hards = []
-    retrievals = []
-    yy = xp.sum(y_data ** 2.0, axis=1)
-
-    if distance == 'cosine':
-        y_data = y_data / yy[:, None]  # L2 normalization
-
-    for start in range(0, num_examples, batch_size):
-        end = start + batch_size
-        if end > num_examples:
-            end = num_examples
-        y_batch = y_data[start:end]
-        yy_batch = yy[start:end]
-        c_batch = c_data[start:end]
-
-        D_batch = yy + yy_batch[:, None] - 2.0 * xp.dot(y_batch, y_data.T)
-        xp.maximum(D_batch, 0, out=D_batch)
-        if add_epsilon:
-            D_batch += 1e-40
-        # ensure the diagonal components are zero
-        xp.fill_diagonal(D_batch[:, start:end], 0)
-
-        soft, hard, retr = compute_soft_hard_retrieval(
-            D_batch, c_data, c_batch)
-
-        softs.append(len(y_batch) * soft)
-        hards.append(len(y_batch) * hard)
-        retrievals.append(len(y_batch) * retr)
-        if return_distance_matrix:
-            D_batches.append(D_batch)
-
-    avg_softs = xp.sum(softs, axis=0) / num_examples
-    avg_hards = xp.sum(hards, axis=0) / num_examples
-    avg_retrievals = xp.sum(retrievals, axis=0) / num_examples
-
-    if return_distance_matrix:
-        D = cuda.to_cpu(xp.vstack(D_batches))
-    else:
-        D = None
-    return D, avg_softs, avg_hards, avg_retrievals
-
-
-def compute_soft_hard_retrieval(distance_matrix, labels, label_batch=None):
-    softs = []
-    hards = []
-    retrievals = []
-
-    if label_batch is None:
-        label_batch = labels
-    distance_matrix = cuda.to_cpu(distance_matrix)
-    labels = cuda.to_cpu(labels)
-    label_batch = cuda.to_cpu(label_batch)
-
-    K = 11  # "K" for top-K
-    for d_i, label_i in zip(distance_matrix, label_batch):
-        top_k_indexes = np.argpartition(d_i, K)[:K]
-        sorted_top_k_indexes = top_k_indexes[np.argsort(d_i[top_k_indexes])]
-        ranked_labels = labels[sorted_top_k_indexes]
-        # 0th entry is excluded since it is always 0
-        ranked_hits = ranked_labels[1:] == label_i
-
-        # soft top-k, k = 1, 2, 5, 10
-        soft = [np.any(ranked_hits[:k]) for k in [1, 2, 5, 10]]
-        softs.append(soft)
-        # hard top-k, k = 2, 3, 4
-        hard = [np.all(ranked_hits[:k]) for k in [2, 3, 4]]
-        hards.append(hard)
-        # retrieval top-k, k = 2, 3, 4
-        retrieval = [np.mean(ranked_hits[:k]) for k in [2, 3, 4]]
-        retrievals.append(retrieval)
-
-    average_soft = np.array(softs).mean(axis=0)
-    average_hard = np.array(hards).mean(axis=0)
-    average_retrieval = np.array(retrievals).mean(axis=0)
-    return average_soft, average_hard, average_retrieval
+def load_params(filename):
+    with open(filename) as f:
+        params = yaml.load(f)
+    return params
 
 
 def make_positive_pairs(num_classes, num_examples_per_class, repetition=1):
@@ -231,12 +115,12 @@ class Logger(defaultdict):
 
             if isinstance(value, (np.ndarray, list)):
                 np.save(os.path.join(dir_path, key + ".npy"), value)
-            elif isinstance(value, (Chain, ChainList)):
+            elif isinstance(value, (chainer.Chain, chainer.ChainList)):
                 model_path = os.path.join(dir_path, "model.npz")
-                save_npz(model_path, value)
-            elif isinstance(value, Optimizer):
+                chainer.serializers.save_npz(model_path, value)
+            elif isinstance(value, chainer.Optimizer):
                 optimizer_path = os.path.join(dir_path, "optimizer.npz")
-                save_npz(optimizer_path, value)
+                chainer.serializers.save_npz(optimizer_path, value)
             else:
                 others.append("{}: {}".format(key, value))
 
