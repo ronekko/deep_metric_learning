@@ -40,7 +40,8 @@ def train(main_script_path, func_train_one_batch, param_dict,
     ##########################################################
     # load database
     ##########################################################
-    streams = data_provider.get_streams(p.batch_size, dataset=p.dataset)
+    streams = data_provider.get_streams(p.batch_size, dataset=p.dataset,
+                                        method=p.method)
     stream_train, stream_train_eval, stream_test = streams
     iter_train = stream_train.get_epoch_iterator()
 
