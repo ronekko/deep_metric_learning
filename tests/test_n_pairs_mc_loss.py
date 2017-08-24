@@ -16,7 +16,7 @@ from chainer import gradient_check
 from chainer import testing
 from chainer.testing import attr
 
-from ..functions.n_pair_mc_loss import n_pair_mc_loss
+from deep_metric_learning.lib.functions.n_pair_mc_loss import n_pair_mc_loss
 
 
 class TestNPairsMCLoss(unittest.TestCase):

@@ -16,7 +16,7 @@ from chainer import gradient_check
 from chainer import testing
 from chainer.testing import attr
 
-from ..functions.clustering_loss import clustering_loss
+from deep_metric_learning.lib.functions.clustering_loss import clustering_loss
 
 
 class TestClusteringLoss(unittest.TestCase):
