@@ -5,245 +5,73 @@ Created on Wed Aug  9 17:07:05 2017
 @author: sakurai
 """
 
-import os
-import time
-import copy
-import numpy as np
-import matplotlib.pyplot as plt
-import six
-
-import chainer
-from chainer import cuda
-import chainer.functions as F
-from chainer import optimizers
-from tqdm import tqdm
 import colorama
+
+import chainer.functions as F
 from sklearn.model_selection import ParameterSampler
 
-from functions.angular_loss import angular_mc_loss
-import common
-from datasets import data_provider
-from models.modified_googlenet import ModifiedGoogLeNet
-from common import UniformDistribution, LogUniformDistribution
+from lib.functions.angular_loss import angular_mc_loss
+from lib.common.utils import (
+    UniformDistribution, LogUniformDistribution, load_params)
+from lib.common.train_eval import train
 
 colorama.init()
 
 
-def main(param_dict, save_distance_matrix=False):
-    script_filename = os.path.splitext(os.path.basename(__file__))[0]
-    chainer.config.train = False
-    device = 0
-    xp = chainer.cuda.cupy
-    config_parser = six.moves.configparser.ConfigParser()
-    config_parser.read('config')
-    log_dir_path = os.path.expanduser(config_parser.get('logs', 'dir_path'))
+def lossfun_one_batch(model, params, batch):
+    # the first half of a batch are the anchors and the latters
+    # are the positive examples corresponding to each anchor
+    x_data, c_data = batch
+    x_data = model.xp.asarray(x_data)
 
-    p = common.Logger(log_dir_path, **param_dict)  # hyperparameters
+    y = model(x_data)
+    y_a, y_p = F.split_axis(y, 2, axis=0)
 
-    ##########################################################
-    # load database
-    ##########################################################
-    streams = data_provider.get_streams(p.batch_size, dataset=p.dataset)
-    stream_train, stream_train_eval, stream_test = streams
-    iter_train = stream_train.get_epoch_iterator()
-
-    ##########################################################
-    # construct the model
-    ##########################################################
-    model = ModifiedGoogLeNet(p.out_dim, p.normalize_output)
-    if device >= 0:
-        model.to_gpu()
-    xp = model.xp
-    if p.optimizer == 'Adam':
-        optimizer = optimizers.Adam(p.learning_rate)
-    elif p.optimizer == 'RMSProp':
-        optimizer = optimizers.RMSprop(p.learning_rate)
-    else:
-        raise ValueError
-    optimizer.setup(model)
-    if p.l2_weight_decay:
-        optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
-
-    # Set 10 times larger learning rate for optimization of the last layer
-    if p.lr_tenfold_last_layer:
-        for param in model.fc.params():
-            param.update_rule.hyperparam.alpha *= 10
-
-    print(p)
-    stop = False
-    logger = common.Logger(log_dir_path)
-    logger.soft_test_best = [0]
-    time_origin = time.time()
-    try:
-        for epoch in range(p.num_epochs):
-            time_begin = time.time()
-            epoch_losses = []
-
-            for i in tqdm(range(p.num_batches_per_epoch),
-                          desc='# {}'.format(epoch)):
-                # the first half of a batch are the anchors and the latters
-                # are the positive examples corresponding to each anchor
-                x_data, c_data = next(iter_train)
-                if device >= 0:
-                    x_data = cuda.to_gpu(x_data, device)
-                    c_data = cuda.to_gpu(c_data, device)
-
-                with chainer.using_config('train', True):
-                    y = model(x_data)
-                    y_a, y_p = F.split_axis(y, 2, axis=0)
-
-                    loss = angular_mc_loss(y_a, y_p, p.alpha)
-                    model.cleargrads()
-                    loss.backward()
-                optimizer.update()
-
-                epoch_losses.append(loss.data)
-                y = y_a = y_p = loss = None
-
-            loss_average = cuda.to_cpu(xp.array(
-                xp.hstack(epoch_losses).mean()))
-
-            # average accuracy and distance matrix for training data
-            D, soft, hard, retrieval = common.evaluate(
-                model, stream_train_eval.get_epoch_iterator(), p.distance_type,
-                return_distance_matrix=save_distance_matrix)
-
-            # average accuracy and distance matrix for testing data
-            D_test, soft_test, hard_test, retrieval_test = common.evaluate(
-                model, stream_test.get_epoch_iterator(), p.distance_type,
-                return_distance_matrix=save_distance_matrix)
-
-            time_end = time.time()
-            epoch_time = time_end - time_begin
-            total_time = time_end - time_origin
-
-            logger.epoch = epoch
-            logger.total_time = total_time
-            logger.loss_log.append(loss_average)
-            logger.train_log.append([soft[0], hard[0], retrieval[0]])
-            logger.test_log.append(
-                [soft_test[0], hard_test[0], retrieval_test[0]])
-
-            # retain the model if it scored the best test acc. ever
-            if soft_test[0] > logger.soft_test_best[0]:
-                logger.model_best = copy.deepcopy(model)
-                logger.optimizer_best = copy.deepcopy(optimizer)
-                logger.epoch_best = epoch
-                logger.D_best = D
-                logger.D_test_best = D_test
-                logger.soft_best = soft
-                logger.soft_test_best = soft_test
-                logger.hard_best = hard
-                logger.hard_test_best = hard_test
-                logger.retrieval_best = retrieval
-                logger.retrieval_test_best = retrieval_test
-
-            print("#", epoch)
-            print("time: {} ({})".format(epoch_time, total_time))
-            print("[train] loss:", loss_average)
-            print("[train] soft:", soft)
-            print("[train] hard:", hard)
-            print("[train] retr:", retrieval)
-            print("[test]  soft:", soft_test)
-            print("[test]  hard:", hard_test)
-            print("[test]  retr:", retrieval_test)
-            print("[best]  soft: {} (at # {})".format(logger.soft_test_best,
-                                                      logger.epoch_best))
-            print(p)
-            # print norms of the weights
-            params = xp.hstack([xp.linalg.norm(param.data)
-                                for param in model.params()]).tolist()
-            print("|W|", map(lambda param: float('%0.2f' % param), params))
-            print()
-
-            # Draw plots
-            if save_distance_matrix:
-                plt.figure(figsize=(8, 4))
-                plt.subplot(1, 2, 1)
-                mat = plt.matshow(D, fignum=0, cmap=plt.cm.gray)
-                plt.colorbar(mat, fraction=0.045)
-                plt.subplot(1, 2, 2)
-                mat = plt.matshow(D_test, fignum=0, cmap=plt.cm.gray)
-                plt.colorbar(mat, fraction=0.045)
-                plt.tight_layout()
-
-            plt.figure(figsize=(8, 4))
-            plt.subplot(1, 2, 1)
-            plt.plot(logger.loss_log, label="tr-loss")
-            plt.grid()
-            plt.legend(loc='best')
-            plt.subplot(1, 2, 2)
-            plt.plot(logger.train_log)
-            plt.plot(logger.test_log)
-            plt.grid()
-            plt.legend(["tr-soft", "tr-hard", "tr-retr",
-                        "te-soft", "te-hard", "te-retr"],
-                       bbox_to_anchor=(1.4, 1))
-            plt.ylim([0.0, 1.0])
-            plt.xlim([0, p.num_epochs])
-            plt.tight_layout()
-            plt.show()
-            plt.draw()
-
-            loss = None
-            D = None
-            D_test = None
-
-    except KeyboardInterrupt:
-        stop = True
-
-    dir_name = "-".join([p.dataset, script_filename,
-                         time.strftime("%Y%m%d%H%M%S"),
-                         str(logger.soft_test_best[0])])
-
-    logger.save(dir_name)
-    p.save(dir_name)
-
-    print("total epochs: {} ({} [s])".format(logger.epoch, logger.total_time))
-    print("best test score (at # {})".format(logger.epoch_best))
-    print("[test]  soft:", logger.soft_test_best)
-    print("[test]  hard:", logger.hard_test_best)
-    print("[test]  retr:", logger.retrieval_test_best)
-    print(str(p).replace(', ', '\n'))
-    print()
-
-    return stop
+    return angular_mc_loss(y_a, y_p, params.alpha)
 
 
 if __name__ == '__main__':
+    param_filename = 'angular_mc_cub200_2011.yaml'
+    random_search_mode = True
     random_state = None
     num_runs = 10000
     save_distance_matrix = False
-    param_distributions = dict(
-        learning_rate=LogUniformDistribution(low=6e-6, high=4e-5),
-        alpha=UniformDistribution(low=5, high=20),
-#        l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
-#        optimizer=['RMSProp', 'Adam'],  # 'RMSPeop' or 'Adam'
-#        lr_tenfold_last_layer=[True, False]
-    )
-    static_params = dict(
-        num_epochs=40,
-        num_batches_per_epoch=500,
-        batch_size=120,
-        out_dim=64,
-#        learning_rate=7.10655234311e-05,
-        crop_size=224,
-        normalize_output=False,
-#        l2_weight_decay=0.00579416451873,
-        optimizer='Adam',  # 'Adam' or 'RMSPeop'
-        lr_tenfold_last_layer=False,
-        distance_type='euclidean',  # 'euclidean' or 'cosine'
-#        dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
-        dataset='cars196'  # 'cars196' or 'cub200_2011' or 'products'
-    )
 
-    sampler = ParameterSampler(param_distributions, num_runs, random_state)
+    if random_search_mode:
+        param_distributions = dict(
+            learning_rate=LogUniformDistribution(low=6e-6, high=4e-5),
+            alpha=UniformDistribution(low=5, high=20),
+#            l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+#            optimizer=['RMSProp', 'Adam'],  # 'RMSPeop' or 'Adam'
+            out_dim=[128, 256, 512],
+        )
+        static_params = dict(
+            num_epochs=40,
+            num_batches_per_epoch=500,
+            batch_size=120,
+#            out_dim=64,
+#            learning_rate=7.10655234311e-05,
+            crop_size=224,
+            normalize_output=False,
+            l2_weight_decay=0,
+            optimizer='Adam',  # 'Adam' or 'RMSPeop'
+            distance_type='euclidean',  # 'euclidean' or 'cosine'
+            dataset='cub200_2011',  # 'cars196' or 'cub200_2011' or 'products'
+            method='n_pairs_mc'  # sampling method for batch construction
+        )
 
-    for random_params in sampler:
-        params = {}
-        params.update(random_params)
-        params.update(static_params)
+        sampler = ParameterSampler(param_distributions, num_runs, random_state)
 
-        stop = main(params, save_distance_matrix)
-        if stop:
-            break
+        for random_params in sampler:
+            params = {}
+            params.update(random_params)
+            params.update(static_params)
+
+            stop = train(__file__, lossfun_one_batch, params,
+                         save_distance_matrix)
+            if stop:
+                break
+    else:
+        print('Train once using config file "{}".'.format(param_filename))
+        params = load_params(param_filename)
+        train(__file__, lossfun_one_batch, params, save_distance_matrix)
