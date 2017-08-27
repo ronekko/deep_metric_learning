@@ -21,16 +21,16 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
                 crop_size=224, load_in_memory=False):
     '''
     args:
-       batch_size (int):
-           number of examples per batch
-       dataset (str):
-           specify the dataset from 'cars196', 'cub200_2011', 'products'.
-       method (str or fuel.schemes.IterationScheme):
-           batch construction method. Specify 'n_pairs_mc', 'clustering', or
-           a subclass of IterationScheme that has constructor such as
-           `__init__(self, batch_size, dataset_train)` .
-       crop_size (int or tuple of ints):
-           height and width of the cropped image.
+        batch_size (int):
+            number of examples per batch
+        dataset (str):
+            specify the dataset from 'cars196', 'cub200_2011', 'products'.
+        method (str or fuel.schemes.IterationScheme):
+            batch construction method. Specify 'n_pairs_mc', 'clustering', or
+            a subclass of IterationScheme that has constructor such as
+            `__init__(self, batch_size, dataset_train)` .
+        crop_size (int or tuple of ints):
+            height and width of the cropped image.
     '''
 
     if dataset == 'cars196':
