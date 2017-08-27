@@ -63,11 +63,11 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
     stream_train_eval = RandomFixedSizeCrop(DataStream(
         dataset_train, iteration_scheme=SequentialScheme(
             dataset_train.num_examples, batch_size)),
-        which_sources=('images',), random_lr_flip=True)
+        which_sources=('images',), center_crop=True)
     stream_test = RandomFixedSizeCrop(DataStream(
         dataset_test, iteration_scheme=SequentialScheme(
             dataset_test.num_examples, batch_size)),
-        which_sources=('images',), random_lr_flip=True)
+        which_sources=('images',), center_crop=True)
 
     return stream_train, stream_train_eval, stream_test
 
