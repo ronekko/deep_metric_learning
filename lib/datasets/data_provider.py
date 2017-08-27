@@ -18,7 +18,7 @@ from .random_fixed_size_crop_mod import RandomFixedSizeCrop
 
 
 def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
-                load_in_memory=False):
+                crop_size=224, load_in_memory=False):
     '''
     args:
        batch_size (int):
@@ -29,6 +29,8 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
            batch construction method. Specify 'n_pairs_mc', 'clustering', or
            a subclass of IterationScheme that has constructor such as
            `__init__(self, batch_size, dataset_train)` .
+       crop_size (int or tuple of ints):
+           height and width of the cropped image.
     '''
 
     if dataset == 'cars196':
@@ -44,6 +46,9 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
     dataset_train = dataset_class(['train'], load_in_memory=load_in_memory)
     dataset_test = dataset_class(['test'], load_in_memory=load_in_memory)
 
+    if not isinstance(crop_size, tuple):
+        crop_size = (crop_size, crop_size)
+
     if method == 'n_pairs_mc':
         labels = dataset_class(
             ['train'], sources=['targets'], load_in_memory=True).data_sources
@@ -58,16 +63,17 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
                          "or subclass of IterationScheme.")
     stream = DataStream(dataset_train, iteration_scheme=scheme)
     stream_train = RandomFixedSizeCrop(stream, which_sources=('images',),
-                                       random_lr_flip=True)
+                                       random_lr_flip=True,
+                                       window_shape=crop_size)
 
     stream_train_eval = RandomFixedSizeCrop(DataStream(
         dataset_train, iteration_scheme=SequentialScheme(
             dataset_train.num_examples, batch_size)),
-        which_sources=('images',), center_crop=True)
+        which_sources=('images',), center_crop=True, window_shape=crop_size)
     stream_test = RandomFixedSizeCrop(DataStream(
         dataset_test, iteration_scheme=SequentialScheme(
             dataset_test.num_examples, batch_size)),
-        which_sources=('images',), center_crop=True)
+        which_sources=('images',), center_crop=True, window_shape=crop_size)
 
     return stream_train, stream_train_eval, stream_test
 
