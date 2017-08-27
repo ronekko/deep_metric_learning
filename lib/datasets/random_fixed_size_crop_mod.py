@@ -34,6 +34,8 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
         probability of 0.5, otherwise do nothing.
     devide_by_255 : bool
         If set to True, then images are normalized to [0, 1) as dtype float32.
+    center_crop : bool
+        If set to True, then images are center-cropped deterministically.
 
     Notes
     -----
@@ -53,12 +55,14 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
 
     """
     def __init__(self, data_stream, window_shape=(224, 224),
-                 random_lr_flip=False, devide_by_255=False, **kwargs):
+                 random_lr_flip=False, devide_by_255=False, center_crop=False,
+                 **kwargs):
         if not window_batch_bchw_available:
             raise ImportError('window_batch_bchw not compiled')
         self.window_shape = window_shape
         self.random_lr_flip = random_lr_flip
         self.devide_by_255 = devide_by_255
+        self.center_crop = center_crop
         self.rng = kwargs.pop('rng', None)
         self.warned_axis_labels = False
         if self.rng is None:
@@ -85,19 +89,28 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
         elif isinstance(source, numpy.ndarray) and source.ndim == 4:
             # Hardcoded assumption of (batch, channels, height, width).
             # This is what the fast Cython code supports.
-            out = numpy.empty(source.shape[:2] + self.window_shape,
-                              dtype=source.dtype)
             batch_size = source.shape[0]
             image_height, image_width = source.shape[2:]
-            max_h_off = image_height - windowed_height
-            max_w_off = image_width - windowed_width
-            if max_h_off < 0 or max_w_off < 0:
-                raise ValueError("Got ndarray batch with image dimensions {} "
-                                 "but requested window shape of {}".format(
-                                     source.shape[2:], self.window_shape))
-            offsets_w = self.rng.random_integers(0, max_w_off, size=batch_size)
-            offsets_h = self.rng.random_integers(0, max_h_off, size=batch_size)
-            window_batch_bchw(source, offsets_h, offsets_w, out)
+
+            if self.center_crop:  # deterministic center crop
+                offset_y = (image_height - windowed_height) // 2
+                offset_x = (image_width - windowed_width) // 2
+                out = source[:, :, offset_y:-offset_y, offset_x:-offset_x]
+            else:  # random crop
+                out = numpy.empty(source.shape[:2] + self.window_shape,
+                                  dtype=source.dtype)
+                max_h_off = image_height - windowed_height
+                max_w_off = image_width - windowed_width
+                if max_h_off < 0 or max_w_off < 0:
+                    raise ValueError(
+                        "Got ndarray batch with image dimensions {} but "
+                        "requested window shape of {}".format(
+                            source.shape[2:], self.window_shape))
+                offsets_w = self.rng.random_integers(0, max_w_off,
+                                                     size=batch_size)
+                offsets_h = self.rng.random_integers(0, max_h_off,
+                                                     size=batch_size)
+                window_batch_bchw(source, offsets_h, offsets_w, out)
 
             if self.random_lr_flip:
                 for example in out:
@@ -129,14 +142,21 @@ class RandomFixedSizeCrop(SourcewiseTransformer, ExpectsAxisLabels):
                              "dimensions ({}, {})".format(
                                  windowed_height, windowed_width,
                                  image_height, image_width))
-        if image_height - windowed_height > 0:
-            off_h = self.rng.random_integers(0, image_height - windowed_height)
-        else:
-            off_h = 0
-        if image_width - windowed_width > 0:
-            off_w = self.rng.random_integers(0, image_width - windowed_width)
-        else:
-            off_w = 0
+
+        if self.center_crop:  # deterministic center crop
+            off_h = (image_height - windowed_height) // 2
+            off_w = (image_width - windowed_width) // 2
+        else:  # random crop
+            if image_height - windowed_height > 0:
+                off_h = self.rng.random_integers(
+                    0, image_height - windowed_height)
+            else:
+                off_h = 0
+            if image_width - windowed_width > 0:
+                off_w = self.rng.random_integers(
+                    0, image_width - windowed_width)
+            else:
+                off_w = 0
         example = example[:, off_h:off_h + windowed_height,
                           off_w:off_w + windowed_width]
 
