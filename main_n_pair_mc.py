@@ -30,7 +30,7 @@ def lossfun_one_batch(model, params, batch):
 
 
 if __name__ == '__main__':
-    param_filename = 'npair_mc_cub200_2011.yaml'
+    param_filename = 'n_pair_mc_cub200_2011.yaml'
     random_search_mode = True
     random_state = None
     num_runs = 10000
@@ -38,15 +38,15 @@ if __name__ == '__main__':
 
     if random_search_mode:
         param_distributions = dict(
-            learning_rate=LogUniformDistribution(low=1e-5, high=1e-4),
-            loss_l2_reg=LogUniformDistribution(low=1e-7, high=1e-1),
-            l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
-            out_dim=[128, 256, 512],
+            learning_rate=LogUniformDistribution(low=6e-5, high=8e-5),
+            loss_l2_reg=LogUniformDistribution(low=9e-3, high=2e-2),
+            l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-2),
+            out_dim=[256, 512],
 #            optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
         )
         static_params = dict(
-            num_epochs=6,
-            num_batches_per_epoch=250,
+            num_epochs=15,
+            num_batches_per_epoch=500,
             batch_size=120,
 #            out_dim=64,
 #            learning_rate=7.10655234311e-05,
