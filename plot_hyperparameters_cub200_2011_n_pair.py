@@ -101,7 +101,7 @@ if __name__ == '__main__':
 #    begin = '20170822121156'
     begin = '20170823203509'
     begin = '20170825130000'
-    begin = '20170826143546'
+    begin = '20170827141940'
     end = None
 
     params = read_params(target_prefix, begin, end)
