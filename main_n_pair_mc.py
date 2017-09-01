@@ -38,14 +38,14 @@ if __name__ == '__main__':
 
     if random_search_mode:
         param_distributions = dict(
-            learning_rate=LogUniformDistribution(low=6e-5, high=8e-5),
-            loss_l2_reg=LogUniformDistribution(low=9e-3, high=2e-2),
-            l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-2),
-            out_dim=[256, 512],
+            learning_rate=LogUniformDistribution(low=3e-5, high=3e-4),
+            loss_l2_reg=LogUniformDistribution(low=1e-6, high=5e-3),
+            l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+            out_dim=[64, 128, 256, 512],
 #            optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
         )
         static_params = dict(
-            num_epochs=15,
+            num_epochs=8,
             num_batches_per_epoch=500,
             batch_size=120,
 #            out_dim=64,
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 #            l2_weight_decay=0.00579416451873,
             optimizer='Adam',  # 'Adam' or 'RMSPeop'
             distance_type='euclidean',  # 'euclidean' or 'cosine'
-            dataset='cub200_2011',  # 'cars196' or 'cub200_2011' or 'products'
+            dataset='cars196',  # 'cars196' or 'cub200_2011' or 'products'
             method='n_pairs_mc'  # sampling method for batch construction
         )
 
