@@ -39,17 +39,17 @@ if __name__ == '__main__':
 
     if random_search_mode:
         param_distributions = dict(
-            learning_rate=LogUniformDistribution(low=8e-5, high=5e-4),
-            alpha=UniformDistribution(low=5, high=60),
-            l2_weight_decay=LogUniformDistribution(low=1e-6, high=1e-2),
+            learning_rate=LogUniformDistribution(low=5e-5, high=2e-4),
+            alpha=UniformDistribution(low=4, high=15),
+            l2_weight_decay=LogUniformDistribution(low=1e-6, high=5e-2),
 #            optimizer=['RMSProp', 'Adam'],  # 'RMSPeop' or 'Adam'
-            out_dim=[128, 256, 512],
+#            out_dim=[128, 256, 512],
         )
         static_params = dict(
-            num_epochs=7,
+            num_epochs=15,
             num_batches_per_epoch=500,
             batch_size=120,
-#            out_dim=64,
+            out_dim=512,
 #            learning_rate=7.10655234311e-05,
             crop_size=224,
             normalize_output=False,
