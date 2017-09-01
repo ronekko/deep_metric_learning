@@ -15,7 +15,6 @@ import time
 
 import chainer
 from chainer import cuda
-from chainer import optimizers
 from chainer import Variable
 from tqdm import tqdm
 
@@ -53,12 +52,8 @@ def train(main_script_path, func_train_one_batch, param_dict,
         model.to_gpu()
     model.cleargrads()
     xp = model.xp
-    if p.optimizer == 'Adam':
-        optimizer = optimizers.Adam(p.learning_rate)
-    elif p.optimizer == 'RMSProp':
-        optimizer = optimizers.RMSprop(p.learning_rate)
-    else:
-        raise ValueError
+    optimizer_class = getattr(chainer.optimizers, p.optimizer)
+    optimizer = optimizer_class(p.learning_rate)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(p.l2_weight_decay))
 
