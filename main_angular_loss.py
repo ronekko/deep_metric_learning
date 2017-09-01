@@ -39,21 +39,21 @@ if __name__ == '__main__':
 
     if random_search_mode:
         param_distributions = dict(
-            learning_rate=LogUniformDistribution(low=6e-6, high=4e-5),
-            alpha=UniformDistribution(low=5, high=20),
-#            l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+            learning_rate=LogUniformDistribution(low=5e-5, high=2e-4),
+            alpha=UniformDistribution(low=4, high=15),
+            l2_weight_decay=LogUniformDistribution(low=1e-6, high=5e-2),
 #            optimizer=['RMSProp', 'Adam'],  # 'RMSPeop' or 'Adam'
-            out_dim=[128, 256, 512],
+#            out_dim=[128, 256, 512],
         )
         static_params = dict(
-            num_epochs=40,
+            num_epochs=15,
             num_batches_per_epoch=500,
             batch_size=120,
-#            out_dim=64,
+            out_dim=512,
 #            learning_rate=7.10655234311e-05,
             crop_size=224,
             normalize_output=False,
-            l2_weight_decay=0,
+#            l2_weight_decay=0,
             optimizer='Adam',  # 'Adam' or 'RMSPeop'
             distance_type='euclidean',  # 'euclidean' or 'cosine'
             dataset='cub200_2011',  # 'cars196' or 'cub200_2011' or 'products'
