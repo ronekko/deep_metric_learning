@@ -30,7 +30,7 @@ def lossfun_one_batch(model, params, batch):
 
 
 if __name__ == '__main__':
-    param_filename = 'n_pair_mc_cub200_2011.yaml'
+    param_filename = 'n_pair_mc_cars196.yaml'
     random_search_mode = True
     random_state = None
     num_runs = 10000
@@ -39,24 +39,24 @@ if __name__ == '__main__':
     if random_search_mode:
         param_distributions = dict(
             learning_rate=LogUniformDistribution(low=6e-5, high=8e-5),
-            loss_l2_reg=LogUniformDistribution(low=9e-3, high=2e-2),
-            l2_weight_decay=LogUniformDistribution(low=1e-4, high=1e-2),
-            out_dim=[256, 512],
+#            loss_l2_reg=LogUniformDistribution(low=1e-6, high=5e-3),
+#            l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+#            out_dim=[64, 128],
 #            optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
         )
         static_params = dict(
-            num_epochs=15,
+            num_epochs=20,
             num_batches_per_epoch=500,
             batch_size=120,
-#            out_dim=64,
-#            learning_rate=7.10655234311e-05,
-#            loss_l2_reg=2.80690151536e-06,  # L2-norm penalty for output vector
+            out_dim=128,
+#            learning_rate=7e-5,
+            loss_l2_reg=3e-3,  # L2-norm penalty for output vector
             crop_size=224,
             normalize_output=False,
-#            l2_weight_decay=0.00579416451873,
+            l2_weight_decay=5e-3,
             optimizer='Adam',  # 'Adam' or 'RMSPeop'
             distance_type='euclidean',  # 'euclidean' or 'cosine'
-            dataset='cub200_2011',  # 'cars196' or 'cub200_2011' or 'products'
+            dataset='cars196',  # 'cars196' or 'cub200_2011' or 'products'
             method='n_pairs_mc'  # sampling method for batch construction
         )
 
