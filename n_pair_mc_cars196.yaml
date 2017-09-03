@@ -1,0 +1,13 @@
+num_epochs: 15
+num_batches_per_epoch: 500
+batch_size: 120
+out_dim: 128
+learning_rate: !!float 1e-4
+loss_l2_reg: !!float 3e-3
+l2_weight_decay: !!float 5e-3
+normalize_output: False
+optimizer: 'Adam'
+crop_size: 224
+distance_type: 'euclidean'
+dataset: 'cars196'
+method: 'n_pairs_mc'  # sampling method for batch construction

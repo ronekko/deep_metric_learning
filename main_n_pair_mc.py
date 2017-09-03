@@ -30,8 +30,8 @@ def lossfun_one_batch(model, params, batch):
 
 
 if __name__ == '__main__':
-    param_filename = 'n_pair_mc_cub200_2011.yaml'
-    random_search_mode = True
+    param_filename = 'n_pair_mc_cars196.yaml'
+    random_search_mode = False
     random_state = None
     num_runs = 10000
     save_distance_matrix = False
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             learning_rate=LogUniformDistribution(low=3e-5, high=3e-4),
             loss_l2_reg=LogUniformDistribution(low=1e-6, high=5e-3),
             l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
-            out_dim=[64, 128, 256, 512],
+            out_dim=[64, 128],
 #            optimizer=['RMSProp', 'Adam']  # 'RMSPeop' or 'Adam'
         )
         static_params = dict(
