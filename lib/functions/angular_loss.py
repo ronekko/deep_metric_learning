@@ -26,7 +26,6 @@ def angular_loss(anchor, positive, negative, alpha=45, in_degree=True,
     # tan(x)^2: [0, ..., pi/4, ..., pi/3] -> [0, ..., 1, ..., 3]
     # strictly increaseing convex function
     sq_tan_alpha = np.tan(alpha) ** 2
-    sq_tan_alpha = 1.0 / 4
     c = (a + p) / 2
     loss = F.relu(F.batch_l2_norm_squared(a - p)
                   - 4 * sq_tan_alpha * F.batch_l2_norm_squared(n - c))
