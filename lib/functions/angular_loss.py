@@ -48,7 +48,7 @@ def angular_mc_loss(f, f_p, alpha=45, in_degree=True):
     n_pairs = len(f)
 
     # first and second term of f_{a,p,n}
-    term1 = 4 * sq_tan_alpha + matmul(f + f_p, transpose(f_p))
+    term1 = 4 * sq_tan_alpha * matmul(f + f_p, transpose(f_p))
     term2 = 2 * (1 + sq_tan_alpha) * F.sum(f * f_p, axis=1, keepdims=True)
 #    term2 = 2 * (1 + sq_tan_alpha) * F.batch_matmul(f, f_p, transa=True).reshape(n_pairs, 1)
 
