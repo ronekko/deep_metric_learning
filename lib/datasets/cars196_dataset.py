@@ -40,4 +40,4 @@ if __name__ == '__main__':
     st = DataStream(
         dataset, iteration_scheme=SequentialScheme(dataset.num_examples, 1))
     it = st.get_epoch_iterator()
-    next(it)
+    it.next()
