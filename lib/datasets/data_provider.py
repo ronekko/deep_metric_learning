@@ -99,7 +99,7 @@ class NPairLossScheme(BatchSizeScheme):
         return self
 
     def __next__(self):
-        return next(self)
+        return self.next()
 
     def next(self):
         anchor_indexes, positive_indexes = self._generate_indexes()
@@ -137,7 +137,7 @@ class EpochwiseShuffledInfiniteScheme(BatchSizeScheme):
         return self
 
     def __next__(self):
-        return next(self)
+        return self.next()
 
     def next(self):
         batch_size = self.batch_size
