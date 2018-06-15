@@ -6,8 +6,7 @@ Created on Thu Dec 22 17:34:25 2016
 """
 
 import os
-import tarfile
-import subprocess
+import zipfile
 import numpy as np
 from scipy.io import loadmat
 import h5py
@@ -26,22 +25,20 @@ def preprocess(hwc_bgr_image, size):
 
 if __name__ == '__main__':
     dataset_name = "cars196"
-    archive_basename = "car_ims"
+    image_dirname = "car_ims"
 
     fuel_root_path = os.path.normpath(fuel.config.config["data_path"]["yaml"])
-    fuel_data_path = os.path.join(fuel_root_path, dataset_name)
-    image_filepath = os.path.join(fuel_data_path, archive_basename + ".tgz")
-    label_filepath = os.path.join(fuel_data_path, "cars_annos.mat")
+    fuel_data_path = os.path.join(fuel_root_path, dataset_name)  # ./cars196
+    zip_filepath = os.path.join(fuel_data_path, "CARS196.zip")
+    image_dirpath = os.path.join(fuel_data_path, "CARS196", image_dirname)
+    label_filepath = os.path.join(fuel_data_path, "CARS196", "cars_annos.mat")
 
-    # Extract car_ims.tgz if car_ims directory does not exist
-    with tarfile.open(image_filepath, "r") as tf:
-        jpg_filenames = [fn for fn in tf.getnames() if fn.endswith(".jpg")]
-    jpg_filenames.sort()
-    num_examples = len(jpg_filenames)  # ????
-    if not os.path.exists(os.path.join(fuel_data_path, archive_basename)):
-        subprocess.call(["tar", "zxvf", image_filepath.replace("\\", "/"),
-                         "-C", fuel_data_path.replace("\\", "/"),
-                         "--force-local"])
+    with zipfile.ZipFile(zip_filepath, 'r') as zf:
+        jpg_filenames = [fn for fn in zf.namelist() if fn.endswith(".jpg")]
+        jpg_filenames.sort()
+        num_examples = len(jpg_filenames)  # ????
+        if not os.path.exists(image_dirpath):
+            zf.extractall(fuel_data_path)
 
     # Extract class labels
     cars_annos = loadmat(label_filepath)
