@@ -48,6 +48,15 @@ def train(main_script_path, func_train_one_batch, param_dict,
     # construct the model
     ##########################################################
     model = ModifiedGoogLeNet(p.out_dim, p.normalize_output)
+
+    # Add proxies as a link
+    dataset_class = data_provider.get_dataset_class(p.dataset)
+    labels = dataset_class(
+        ['train'], sources=['targets'], load_in_memory=True).data_sources
+    num_classes = len(np.unique(labels))
+    proxy = chainer.links.EmbedID(num_classes, p.out_dim)
+    model.add_link('proxy', proxy)
+
     if device >= 0:
         model.to_gpu()
     model.cleargrads()
