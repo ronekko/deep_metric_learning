@@ -17,6 +17,24 @@ from .online_products_dataset import OnlineProductsDataset
 from .random_fixed_size_crop_mod import RandomFixedSizeCrop
 
 
+def get_dataset_class(dataset_name):
+    """
+    Args:
+        dataset (str):
+            specify the dataset from 'cars196', 'cub200_2011', 'products'.
+    """
+    if dataset_name == 'cars196':
+        dataset_class = Cars196Dataset
+    elif dataset_name == 'cub200_2011':
+        dataset_class = Cub200_2011Dataset
+    elif dataset_name == 'products':
+        dataset_class = OnlineProductsDataset
+    else:
+        raise ValueError(
+            "`dataset` must be 'cars196', 'cub200_2011' or 'products'.")
+    return dataset_class
+
+
 def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
                 crop_size=224, load_in_memory=False):
     '''
@@ -32,17 +50,7 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
         crop_size (int or tuple of ints):
             height and width of the cropped image.
     '''
-
-    if dataset == 'cars196':
-        dataset_class = Cars196Dataset
-    elif dataset == 'cub200_2011':
-        dataset_class = Cub200_2011Dataset
-    elif dataset == 'products':
-        dataset_class = OnlineProductsDataset
-    else:
-        raise ValueError(
-            "`dataset` must be 'cars196', 'cub200_2011' or 'products'.")
-
+    dataset_class = get_dataset_class(dataset)
     dataset_train = dataset_class(['train'], load_in_memory=load_in_memory)
     dataset_test = dataset_class(['test'], load_in_memory=load_in_memory)
 
