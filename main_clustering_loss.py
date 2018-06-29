@@ -66,7 +66,7 @@ if __name__ == '__main__':
 #            optimizer='RMSProp',  # 'Adam' or 'RMSPeop'
             distance_type='euclidean',  # 'euclidean' or 'cosine'
             dataset='cub200_2011',  # 'cars196' or 'cub200_2011' or 'products'
-            method='n_pairs_mc'  # sampling method for batch construction
+            method='clustering'  # sampling method for batch construction
         )
 
         sampler = ParameterSampler(param_distributions, num_runs, random_state)
