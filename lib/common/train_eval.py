@@ -54,8 +54,8 @@ def train(main_script_path, func_train_one_batch, param_dict,
     labels = dataset_class(
         ['train'], sources=['targets'], load_in_memory=True).data_sources
     num_classes = len(np.unique(labels))
-    proxy = chainer.links.EmbedID(num_classes, p.out_dim)
-    model.add_link('proxy', proxy)
+    proxy = np.random.randn(num_classes, p.out_dim).astype(np.float32)
+    model.add_param('P', initializer=proxy)
 
     if device >= 0:
         model.to_gpu()
