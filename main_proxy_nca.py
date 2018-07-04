@@ -61,6 +61,59 @@ def lossfun_one_batch(model, params, batch):
     return F.average(loss)
 
 
+## Implementation faithful (but naive) to equation (4)
+#def lossfun_one_batch(model, params, batch):
+#    # the first half of a batch are the anchors and the latters
+#    # are the positive examples corresponding to each anchor
+#    xp = model.xp
+#    x_data, c_data = batch
+#    x_data = xp.asarray(x_data)
+#    c_data = c_data.ravel() - 1
+#
+#    y = model(x_data)  # y must be normalized as unit vectors
+#
+#    # Forcely normalizing the norm of each proxy
+#    # TODO: Is this safe? (This operation is done out of computation graph)
+##    model.P.array /= xp.linalg.norm(model.P.array, axis=1, keepdims=True)
+#
+#    proxy = model.P
+#    d = squared_distance_matrix(y, F.normalize(proxy))
+#    inv_exp = F.exp(-d)
+#    positive = inv_exp[np.arange(len(y)), c_data]
+#    loss = -F.log(positive / (F.sum(inv_exp, axis=1) - positive))
+#    return F.average(loss)
+
+
+## Implementation faithful (with logsumexp) to equation (4)
+#def lossfun_one_batch(model, params, batch):
+#    # the first half of a batch are the anchors and the latters
+#    # are the positive examples corresponding to each anchor
+#    xp = model.xp
+#    x_data, c_data = batch
+#    x_data = xp.asarray(x_data)
+#    c_data = c_data.ravel() - 1
+#
+#    y = model(x_data)  # y must be normalized as unit vectors
+#
+#    # Forcely normalizing the norm of each proxy
+#    # TODO: Is this safe? (This operation is done out of computation graph)
+##    model.P.array /= xp.linalg.norm(model.P.array, axis=1, keepdims=True)
+#
+#    proxy = model.P
+#    distance = squared_distance_matrix(y, F.normalize(proxy))
+#
+#    d_posi = distance[np.arange(len(y)), c_data]
+#
+#    B, K = distance.shape  # batch size and the number of classes
+#    # For each row, remove one element corresponding to the positive distance
+#    mask = np.tile(np.arange(K), (B, 1)) != c_data[:, None]
+#    d_nega = distance[mask].reshape(B, K - 1)
+#
+#    log_denominator = F.logsumexp(-d_nega, axis=1)
+#    loss = d_posi + log_denominator
+#    return F.average(loss)
+
+
 if __name__ == '__main__':
     param_filename = 'proxy_nca_cars196.yaml'
     random_search_mode = True
