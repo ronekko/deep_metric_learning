@@ -42,27 +42,6 @@ def squared_distance_matrix2(X, Y=None):
     return distances
 
 
-# Implementation with softmax
-def lossfun_one_batch(model, params, batch):
-    # the first half of a batch are the anchors and the latters
-    # are the positive examples corresponding to each anchor
-    xp = model.xp
-    x_data, c_data = batch
-    x_data = xp.asarray(x_data)
-    c_data = c_data.ravel() - 1
-
-    y = model(x_data)  # y must be normalized as unit vectors
-
-    # Forcely normalizing the norm of each proxy
-    # TODO: Is this safe? (This operation is done out of computation graph)
-#    model.P.array /= xp.linalg.norm(model.P.array, axis=1, keepdims=True)
-
-    d = squared_distance_matrix(y, F.normalize(model.P))
-    prob = F.softmax(-d)
-    loss = F.log(1.0 / prob[np.arange(len(y)), c_data] - 1.0)
-    return F.average(loss)
-
-
 ## Implementation faithful (with logsumexp) to equation (4)
 #def lossfun_one_batch(model, params, batch):
 #    # the first half of a batch are the anchors and the latters
