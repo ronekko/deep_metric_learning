@@ -57,8 +57,8 @@ def lossfun_one_batch(model, params, batch):
     # TODO: Is this safe? (This operation is done out of computation graph)
 #    model.P.array /= xp.linalg.norm(model.P.array, axis=1, keepdims=True)
 
-    proxy = model.P
-    distance = squared_distance_matrix(y, F.normalize(proxy))
+    proxy = F.normalize(model.P)
+    distance = squared_distance_matrix(y, proxy)
 
     d_posi = distance[np.arange(len(y)), c_data]
 
@@ -81,8 +81,8 @@ if __name__ == '__main__':
 
     if random_search_mode:
         param_distributions = dict(
-            learning_rate=LogUniformDistribution(low=2e-6, high=2e-4),
-            l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
+            learning_rate=LogUniformDistribution(low=2e-6, high=6e-5),
+            l2_weight_decay=LogUniformDistribution(low=1e-4, high=2e-2),
 #            out_dim=[64, 128, 256],
             optimizer=['RMSprop', 'Adam']  # 'RMSPeop' or 'Adam'
         )
@@ -99,7 +99,6 @@ if __name__ == '__main__':
             distance_type='cosine',  # 'euclidean' or 'cosine'
             dataset='cars196',  # 'cars196' or 'cub200_2011' or 'products'
             method='clustering',  # sampling method for batch construction
-            comment='softmax'
         )
 
         sampler = ParameterSampler(param_distributions, num_runs, random_state)
