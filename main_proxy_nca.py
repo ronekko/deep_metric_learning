@@ -42,12 +42,14 @@ def squared_distance_matrix2(X, Y=None):
     return distances
 
 
+# Implementation with softmax
 def lossfun_one_batch(model, params, batch):
     # the first half of a batch are the anchors and the latters
     # are the positive examples corresponding to each anchor
     xp = model.xp
     x_data, c_data = batch
     x_data = xp.asarray(x_data)
+    c_data = c_data.ravel() - 1
 
     y = model(x_data)  # y must be normalized as unit vectors
 
@@ -123,16 +125,16 @@ if __name__ == '__main__':
 
     if random_search_mode:
         param_distributions = dict(
-            learning_rate=LogUniformDistribution(low=1e-6, high=1e-2),
+            learning_rate=LogUniformDistribution(low=2e-6, high=2e-4),
             l2_weight_decay=LogUniformDistribution(low=1e-5, high=1e-2),
-            out_dim=[64, 128],
+#            out_dim=[64, 128, 256],
             optimizer=['RMSprop', 'Adam']  # 'RMSPeop' or 'Adam'
         )
         static_params = dict(
-            num_epochs=5,
+            num_epochs=15,
             num_batches_per_epoch=1875,
             batch_size=32,
-#            out_dim=128,
+            out_dim=256,
 #            learning_rate=7e-5,
             crop_size=224,
             normalize_output=True,
@@ -140,7 +142,8 @@ if __name__ == '__main__':
 #            optimizer='Adam',  # 'Adam' or 'RMSPeop'
             distance_type='cosine',  # 'euclidean' or 'cosine'
             dataset='cars196',  # 'cars196' or 'cub200_2011' or 'products'
-            method='clustering'  # sampling method for batch construction
+            method='clustering',  # sampling method for batch construction
+            comment='softmax'
         )
 
         sampler = ParameterSampler(param_distributions, num_runs, random_state)
