@@ -6,70 +6,27 @@ Created on Mon Jan 09 20:49:04 2017
 """
 
 import colorama
-import numpy as np
 
-import chainer.functions as F
 from sklearn.model_selection import ParameterSampler
 
-from lib.functions.n_pair_mc_loss import n_pair_mc_loss
+from lib.functions.proxy_nca_loss import proxy_nca_loss
 from lib.common.utils import LogUniformDistribution, load_params
 from lib.common.train_eval import train
 
 colorama.init()
 
 
-def squared_distance_matrix(X, Y=None):
-    if Y is None:
-        Y = X
-    return F.sum(((X[:, None] - Y[None]) ** 2), -1)
-
-
-def squared_distance_matrix2(X, Y=None):
-    XX = F.batch_l2_norm_squared(X)
-    if Y is None:
-        Y = X
-        YY = XX
-    else:
-        YY = F.batch_l2_norm_squared(Y)
-    m = len(X)
-    n = len(Y)
-
-    distances = -2.0 * F.matmul(X, Y.T)
-    distances = distances + F.broadcast_to(F.expand_dims(XX, 1), (m, n))
-    distances = distances + F.broadcast_to(F.expand_dims(YY, 0), (m, n))
-    # TODO: Is this necessary?
-    distances = F.relu(distances)  # Force to be nonnegative
-    return distances
-
-
-# Implementation faithful (with logsumexp) to equation (4)
 def lossfun_one_batch(model, params, batch):
     # the first half of a batch are the anchors and the latters
     # are the positive examples corresponding to each anchor
     xp = model.xp
     x_data, c_data = batch
     x_data = xp.asarray(x_data)
+    # Since the class ID starts by 1, they are shifted in order to be 0-based.
     c_data = c_data.ravel() - 1
 
     y = model(x_data)  # y must be normalized as unit vectors
-
-    # Forcely normalizing the norm of each proxy
-    # TODO: Is this safe? (This operation is done out of computation graph)
-#    model.P.array /= xp.linalg.norm(model.P.array, axis=1, keepdims=True)
-
-    proxy = F.normalize(model.P)
-    distance = squared_distance_matrix(y, proxy)
-
-    d_posi = distance[np.arange(len(y)), c_data]
-
-    B, K = distance.shape  # batch size and the number of classes
-    # For each row, remove one element corresponding to the positive distance
-    mask = np.tile(np.arange(K), (B, 1)) != c_data[:, None]
-    d_nega = distance[mask].reshape(B, K - 1)
-
-    log_denominator = F.logsumexp(-d_nega, axis=1)
-    loss = d_posi + log_denominator
-    return F.average(loss)
+    return proxy_nca_loss(y, model.P, c_data)
 
 
 if __name__ == '__main__':
