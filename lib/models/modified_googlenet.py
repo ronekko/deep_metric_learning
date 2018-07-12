@@ -15,7 +15,7 @@ from . import googlenet
 
 class ModifiedGoogLeNet(googlenet.GoogLeNet):
 
-    def __init__(self, out_dims=64, normalize_output=False):
+    def __init__(self, out_dims=64, normalize_output=False, n_proxy=None):
         super(ModifiedGoogLeNet, self).__init__()
         # remove links and functions
         for name in [n for n in self._children if n.startswith('loss')]:
@@ -26,6 +26,11 @@ class ModifiedGoogLeNet(googlenet.GoogLeNet):
 
         self.add_link('bn_fc', L.BatchNormalization(1024))
         self.add_link('fc', L.Linear(1024, out_dims))
+
+        # For Proxy-NCA
+        if isinstance(n_proxy, int) and n_proxy > 0:
+            proxy = np.random.randn(n_proxy, out_dims).astype(np.float32)
+            self.add_param('P', initializer=proxy)
 
         image_mean = np.array([123, 117, 104], dtype=np.float32)  # RGB
         self._image_mean = image_mean[None, :, None, None]

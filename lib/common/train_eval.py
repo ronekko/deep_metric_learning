@@ -39,23 +39,27 @@ def train(main_script_path, func_train_one_batch, param_dict,
     ##########################################################
     # load database
     ##########################################################
+    if p.method == 'proxy_nca':
+        iteration_scheme = 'clustering'
+    else:
+        iteration_scheme = p.method
     streams = data_provider.get_streams(p.batch_size, dataset=p.dataset,
-                                        method=p.method, crop_size=p.crop_size)
+                                        method=iteration_scheme,
+                                        crop_size=p.crop_size)
     stream_train, stream_train_eval, stream_test = streams
     iter_train = stream_train.get_epoch_iterator()
 
     ##########################################################
     # construct the model
     ##########################################################
-    model = ModifiedGoogLeNet(p.out_dim, p.normalize_output)
-
-    # Add proxies as a link
-    dataset_class = data_provider.get_dataset_class(p.dataset)
-    labels = dataset_class(
-        ['train'], sources=['targets'], load_in_memory=True).data_sources
-    num_classes = len(np.unique(labels))
-    proxy = np.random.randn(num_classes, p.out_dim).astype(np.float32)
-    model.add_param('P', initializer=proxy)
+    if p.method == 'proxy_nca':
+        dataset_class = data_provider.get_dataset_class(p.dataset)
+        labels = dataset_class(
+            ['train'], sources=['targets'], load_in_memory=True).data_sources
+        num_classes = len(np.unique(labels))
+        model = ModifiedGoogLeNet(p.out_dim, p.normalize_output, num_classes)
+    else:
+        model = ModifiedGoogLeNet(p.out_dim, p.normalize_output)
 
     if device >= 0:
         model.to_gpu()

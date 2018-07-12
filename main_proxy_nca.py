@@ -98,7 +98,8 @@ if __name__ == '__main__':
 #            optimizer='Adam',  # 'Adam' or 'RMSPeop'
             distance_type='cosine',  # 'euclidean' or 'cosine'
             dataset='cars196',  # 'cars196' or 'cub200_2011' or 'products'
-            method='clustering',  # sampling method for batch construction
+            method='proxy_nca',  # sampling method for batch construction
+            comment='bs32'
         )
 
         sampler = ParameterSampler(param_distributions, num_runs, random_state)
