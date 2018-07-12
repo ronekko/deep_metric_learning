@@ -1,0 +1,12 @@
+num_epochs: 20
+num_batches_per_epoch: 500
+batch_size: 32
+out_dim: 256
+learning_rate: !!float 7e-5
+l2_weight_decay: !!float 8e-3
+normalize_output: True
+optimizer: 'RMSprop'
+crop_size: 224
+distance_type: 'cosine'
+dataset: 'cars196'
+method: 'proxy-nca'
